@@ -1,6 +1,0 @@
-1:"$Sreact.fragment"
-2:"$Sreact.suspense"
-3:I[5580,["/hakuou-exhibition-survey/_next/static/chunks/05-c3ty_6dwfk.js","/hakuou-exhibition-survey/_next/static/chunks/14mrh2-p_w84d.js","/hakuou-exhibition-survey/_next/static/chunks/3l7x5e7tzca7_.js"],"default"]
-4:I[97367,["/hakuou-exhibition-survey/_next/static/chunks/05-c3ty_6dwfk.js","/hakuou-exhibition-survey/_next/static/chunks/14mrh2-p_w84d.js"],"OutletBoundary"]
-0:{"rsc":["$","$1","c",{"children":[["$","$2",null,{"fallback":null,"children":["$","$L3",null,{}]}],[["$","script","script-0",{"src":"/hakuou-exhibition-survey/_next/static/chunks/3l7x5e7tzca7_.js","async":true}]],["$","$L4",null,{"children":["$","$2",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"ZbvlsYo3ElBl4hGBm3Fle"}
-5:null

@@ -1,2 +1,0 @@
-:HL["/hakuou-exhibition-survey/_next/static/chunks/1z-pmzpjr3vee.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"survey","param":null,"prefetchHints":0,"slots":{"children":{"name":"eventSlug","param":{"type":"d","key":"fooma2026","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"ZbvlsYo3ElBl4hGBm3Fle"}
