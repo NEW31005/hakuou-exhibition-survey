@@ -21,16 +21,14 @@ export default function SurveyIndexClient() {
       <div className="mx-auto max-w-2xl rounded-lg border border-hakuou-line bg-white p-7 shadow-panel">
         <div className="flex items-start justify-between gap-4">
           <p className="text-sm font-bold text-hakuou-blue">HAKUOU ROBOTICS</p>
-          <div className="rounded bg-black px-2 py-1">
-            <Image
-              src={logoSrc}
-              alt="HAKUOU ROBOTICS"
-              width={180}
-              height={72}
-              className="h-8 w-auto"
-              priority
-            />
-          </div>
+          <Image
+            src={logoSrc}
+            alt="HAKUOU ROBOTICS"
+            width={2303}
+            height={398}
+            className="h-8 w-auto max-w-[46vw] object-contain"
+            priority
+          />
         </div>
         <h1 className="mt-2 text-2xl font-bold">展示会アンケート</h1>
         <p className="mt-4 text-hakuou-muted">

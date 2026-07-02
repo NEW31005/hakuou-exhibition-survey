@@ -92,16 +92,14 @@ function SurveyShell({
                 <div>{[event.startDate, event.endDate].filter(Boolean).join(" - ")}</div>
               </div>
             ) : null}
-            <div className="rounded bg-black px-2 py-1">
-              <Image
-                src={logoSrc}
-                alt="HAKUOU ROBOTICS"
-                width={180}
-                height={72}
-                className="h-8 w-auto sm:h-10"
-                priority
-              />
-            </div>
+            <Image
+              src={logoSrc}
+              alt="HAKUOU ROBOTICS"
+              width={2303}
+              height={398}
+              className="h-8 w-auto max-w-[46vw] object-contain sm:h-10 md:h-11"
+              priority
+            />
           </div>
         </div>
       </div>
