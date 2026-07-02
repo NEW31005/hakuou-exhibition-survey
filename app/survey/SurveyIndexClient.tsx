@@ -8,13 +8,14 @@ import { useEffect } from "react";
 export default function SurveyIndexClient() {
   const searchParams = useSearchParams();
   const eventSlug = searchParams.get("eventSlug") || searchParams.get("eventId");
-  const logoSrc = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/hakuou-robotics-logo.png`;
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const logoSrc = `${basePath}/hakuou-robotics-logo.png`;
 
   useEffect(() => {
     if (eventSlug) {
-      window.location.replace(`/survey/${encodeURIComponent(eventSlug)}`);
+      window.location.replace(`${basePath}/survey/${encodeURIComponent(eventSlug)}`);
     }
-  }, [eventSlug]);
+  }, [basePath, eventSlug]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-12 text-hakuou-ink">
