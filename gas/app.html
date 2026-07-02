@@ -1,0 +1,88 @@
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <p class="brand-kicker">HAKUOU ROBOTICS</p>
+      <p class="brand-title">展示会アンケート集計</p>
+    </div>
+    <div class="actions">
+      <button class="csv" data-csv="event">展示会別CSV</button>
+      <button class="csv" data-csv="all">全回答CSV</button>
+      <button class="csv" data-csv="highRank">S/A CSV</button>
+      <button class="csv" data-csv="siteVisit">現地調査CSV</button>
+      <button class="csv" data-csv="estimate">見積CSV</button>
+    </div>
+  </div>
+</div>
+
+<main class="page">
+  <section class="hero">
+    <div>
+      <h1>展示会ごとの回答状況と有望リードを確認</h1>
+      <p class="muted">
+        展示会別の件数、希望対応、導入時期、現場課題、回答詳細を横断して確認できます。
+      </p>
+    </div>
+    <div id="generatedAt" class="generated">読み込み中...</div>
+  </section>
+
+  <section class="panel">
+    <h2>絞り込み</h2>
+    <div class="filters">
+      <label>
+        展示会
+        <select id="eventSlug"></select>
+      </label>
+      <label>
+        leadRank
+        <select id="leadRank"></select>
+      </label>
+      <label>
+        希望対応
+        <select id="requestedAction"></select>
+      </label>
+      <label>
+        導入時期
+        <select id="introductionTiming"></select>
+      </label>
+      <label>
+        連絡可否
+        <select id="contactPermission"></select>
+      </label>
+      <label>
+        キーワード
+        <input id="keyword" type="search" placeholder="会社名・氏名・自由記述など">
+      </label>
+    </div>
+    <div class="actions" style="margin-top: 14px;">
+      <button class="primary" id="applyFilters">適用</button>
+      <button id="resetFilters">解除</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>全展示会横断集計</h2>
+    <div id="kpis" class="kpi-grid"></div>
+  </section>
+
+  <section class="panel">
+    <h2>展示会一覧</h2>
+    <div id="events"></div>
+  </section>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>展示会別集計</h2>
+      <div id="summaryCharts"></div>
+    </section>
+
+    <section class="panel">
+      <h2>回答詳細</h2>
+      <div id="responseDetail" class="empty">回答一覧から行を選択してください。</div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>展示会別回答一覧</h2>
+    <div id="responses" class="loading">読み込み中...</div>
+  </section>
+</main>

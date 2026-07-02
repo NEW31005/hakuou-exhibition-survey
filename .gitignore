@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+.env
+.env*.local
+dev-server*.log
+/Code.gs
+/index.html
+/dashboard.html
+/appsscript.json
+/.clasp.json
+/gas/.clasp.json
+/gas-create-temp/

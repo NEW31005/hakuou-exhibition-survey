@@ -1,0 +1,321 @@
+<script>
+  let currentData = null;
+  let filtersLoaded = false;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('applyFilters').addEventListener('click', loadSummary);
+    document.getElementById('resetFilters').addEventListener('click', resetFilters);
+    document.querySelectorAll('[data-csv]').forEach(button => {
+      button.addEventListener('click', () => downloadCsv(button.dataset.csv));
+    });
+    loadSummary();
+  });
+
+  function loadSummary() {
+    document.getElementById('responses').className = 'loading';
+    document.getElementById('responses').textContent = '読み込み中...';
+
+    google.script.run
+      .withSuccessHandler(renderSummary)
+      .withFailureHandler(error => {
+        document.getElementById('responses').className = 'empty';
+        document.getElementById('responses').textContent = error.message || '読み込みに失敗しました。';
+      })
+      .getSummaryData(collectFilters());
+  }
+
+  function collectFilters() {
+    return {
+      eventSlug: getValue('eventSlug'),
+      leadRank: getValue('leadRank'),
+      requestedAction: getValue('requestedAction'),
+      introductionTiming: getValue('introductionTiming'),
+      contactPermission: getValue('contactPermission'),
+      keyword: getValue('keyword')
+    };
+  }
+
+  function resetFilters() {
+    ['eventSlug', 'leadRank', 'requestedAction', 'introductionTiming', 'contactPermission', 'keyword']
+      .forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    loadSummary();
+  }
+
+  function renderSummary(data) {
+    currentData = data;
+    document.getElementById('generatedAt').textContent = `最終更新 ${data.generatedAt}`;
+
+    if (!filtersLoaded) {
+      fillFilters(data.filters);
+      filtersLoaded = true;
+    }
+
+    renderKpis(data);
+    renderEvents(data.events);
+    renderCharts(data.summary);
+    renderResponses(data.responses);
+    document.getElementById('responseDetail').className = 'empty';
+    document.getElementById('responseDetail').textContent = '回答一覧から行を選択してください。';
+  }
+
+  function fillFilters(filters) {
+    fillSelect('eventSlug', filters.events || [], true);
+    fillSelect('leadRank', (filters.leadRank || []).map(value => ({ value, label: value })), true);
+    fillSelect('requestedAction', (filters.requestedActions || []).map(value => ({ value, label: value })), true);
+    fillSelect('introductionTiming', (filters.introductionTiming || []).map(value => ({ value, label: value })), true);
+    fillSelect('contactPermission', (filters.contactPermission || []).map(value => ({ value, label: value })), true);
+  }
+
+  function fillSelect(id, items, includeAll) {
+    const select = document.getElementById(id);
+    select.innerHTML = includeAll ? '<option value="">すべて</option>' : '';
+    items.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.value;
+      option.textContent = item.label;
+      select.appendChild(option);
+    });
+  }
+
+  function renderKpis(data) {
+    const rankMap = toCountMap(data.summary.rankCounts);
+    const items = [
+      ['回答数', data.summary.responseCount],
+      ['Sランク', rankMap.S || 0],
+      ['Aランク', rankMap.A || 0],
+      ['Bランク', rankMap.B || 0],
+      ['Cランク', rankMap.C || 0]
+    ];
+
+    document.getElementById('kpis').innerHTML = items.map(item => `
+      <div class="kpi">
+        <div class="label">${escapeHtml(item[0])}</div>
+        <div class="value">${escapeHtml(item[1])}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderEvents(events) {
+    if (!events.length) {
+      document.getElementById('events').innerHTML = '<div class="empty">展示会がありません。</div>';
+      return;
+    }
+
+    document.getElementById('events').innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>展示会名</th>
+              <th>eventSlug</th>
+              <th>開催日</th>
+              <th>会場</th>
+              <th>ステータス</th>
+              <th>回答数</th>
+              <th>S</th>
+              <th>A</th>
+              <th>B</th>
+              <th>C</th>
+              <th>フォームURL</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${events.map(event => `
+              <tr>
+                <td><strong>${escapeHtml(event.eventName)}</strong></td>
+                <td>${escapeHtml(event.eventSlug)}</td>
+                <td>${escapeHtml([event.startDate, event.endDate].filter(Boolean).join(' - '))}</td>
+                <td>${escapeHtml(event.venue)}</td>
+                <td><span class="chip status-${escapeHtml(event.status)}">${escapeHtml(event.status)}</span></td>
+                <td>${escapeHtml(event.responseCount)}</td>
+                <td>${escapeHtml(event.rankS)}</td>
+                <td>${escapeHtml(event.rankA)}</td>
+                <td>${escapeHtml(event.rankB)}</td>
+                <td>${escapeHtml(event.rankC)}</td>
+                <td>${escapeHtml(event.formUrl)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderCharts(summary) {
+    const groups = [
+      ['希望対応別件数', summary.requestedActionCounts],
+      ['導入時期別件数', summary.introductionTimingCounts],
+      ['導入検討状況別件数', summary.considerationStatusCounts],
+      ['現場課題別件数', summary.issueCounts],
+      ['搬送重量別件数', summary.loadWeightCounts],
+      ['荷姿別件数', summary.loadTypeCounts]
+    ];
+
+    document.getElementById('summaryCharts').innerHTML = groups
+      .map(group => renderBarList(group[0], group[1]))
+      .join('');
+  }
+
+  function renderBarList(title, items) {
+    const max = Math.max(1, ...items.map(item => Number(item.count) || 0));
+    return `
+      <div style="margin-bottom: 18px;">
+        <h3>${escapeHtml(title)}</h3>
+        ${items.length ? `
+          <div class="bar-list">
+            ${items.map(item => {
+              const width = Math.max(4, Math.round((Number(item.count) || 0) / max * 100));
+              return `
+                <div class="bar-row">
+                  <div class="bar-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+                  <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+                  <div class="bar-count">${escapeHtml(item.count)}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : '<div class="empty">該当データはありません。</div>'}
+      </div>
+    `;
+  }
+
+  function renderResponses(responses) {
+    if (!responses.length) {
+      document.getElementById('responses').className = 'empty';
+      document.getElementById('responses').textContent = '該当する回答はありません。';
+      return;
+    }
+
+    document.getElementById('responses').className = '';
+    document.getElementById('responses').innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>回答日時</th>
+              <th>会社名</th>
+              <th>氏名</th>
+              <th>部署名・役職</th>
+              <th>メール</th>
+              <th>電話</th>
+              <th>導入検討状況</th>
+              <th>導入時期</th>
+              <th>希望対応</th>
+              <th>leadScore</th>
+              <th>leadRank</th>
+              <th>連絡可否</th>
+              <th>自由記述</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${responses.map(response => `
+              <tr data-response-id="${escapeHtml(response.id)}">
+                <td>${escapeHtml(response.submittedAt)}</td>
+                <td><strong>${escapeHtml(response.companyName)}</strong></td>
+                <td>${escapeHtml(response.personName)}</td>
+                <td>${escapeHtml(response.department)}</td>
+                <td>${escapeHtml(response.email)}</td>
+                <td>${escapeHtml(response.phone)}</td>
+                <td>${escapeHtml(response.considerationStatus)}</td>
+                <td>${escapeHtml(response.introductionTiming)}</td>
+                <td>${escapeHtml(response.requestedActions)}</td>
+                <td>${escapeHtml(response.leadScore)}</td>
+                <td>${rankChip(response.leadRank)}</td>
+                <td>${escapeHtml(response.contactPermission)}</td>
+                <td>${escapeHtml(response.freeComment)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    document.querySelectorAll('[data-response-id]').forEach(row => {
+      row.addEventListener('click', () => {
+        const response = currentData.responses.find(item => item.id === row.dataset.responseId);
+        renderDetail(response);
+      });
+    });
+  }
+
+  function renderDetail(response) {
+    if (!response) return;
+    const fields = [
+      ['回答日時', response.submittedAt],
+      ['展示会', `${response.eventName} (${response.eventSlug})`],
+      ['会社名', response.companyName],
+      ['氏名', response.personName],
+      ['部署名・役職', response.department],
+      ['メール', response.email],
+      ['電話', response.phone],
+      ['関心内容', response.interests],
+      ['説明評価', response.explanationRating],
+      ['現場課題', response.issues],
+      ['自動化したい作業', response.automationTasks],
+      ['重量', response.loadWeight],
+      ['荷姿', response.loadType],
+      ['搬送距離', response.transportDistance],
+      ['導入検討状況', response.considerationStatus],
+      ['導入時期', response.introductionTiming],
+      ['予算・稟議', response.budgetStatus],
+      ['立場', response.userRole],
+      ['希望対応', response.requestedActions],
+      ['連絡可否', response.contactPermission],
+      ['leadScore / Rank', `${response.leadScore} / ${response.leadRank}`],
+      ['自由記述', response.freeComment]
+    ];
+
+    document.getElementById('responseDetail').className = 'detail';
+    document.getElementById('responseDetail').innerHTML = fields.map(field => `
+      <div class="detail-item">
+        <div class="detail-label">${escapeHtml(field[0])}</div>
+        <div class="detail-value">${escapeHtml(field[1])}</div>
+      </div>
+    `).join('');
+  }
+
+  function downloadCsv(type) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('action', 'csv');
+    url.searchParams.set('type', type);
+
+    const eventSlug = getValue('eventSlug');
+    if (type === 'event') {
+      if (!eventSlug) {
+        alert('展示会別CSVは、先に展示会を選択してください。');
+        return;
+      }
+      url.searchParams.set('eventSlug', eventSlug);
+    }
+
+    window.open(url.toString(), '_blank');
+  }
+
+  function rankChip(rank) {
+    const cls = rank === 'S' ? 'rank-s' : rank === 'A' ? 'rank-a' : rank === 'B' ? 'rank-b' : '';
+    return `<span class="chip ${cls}">${escapeHtml(rank)}</span>`;
+  }
+
+  function toCountMap(items) {
+    return items.reduce((acc, item) => {
+      acc[item.name] = item.count;
+      return acc;
+    }, {});
+  }
+
+  function getValue(id) {
+    return document.getElementById(id).value.trim();
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+</script>
