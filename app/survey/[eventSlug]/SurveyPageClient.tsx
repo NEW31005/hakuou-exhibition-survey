@@ -75,6 +75,8 @@ function SurveyShell({
   event?: SurveyEvent;
   children: React.ReactNode;
 }) {
+  const logoSrc = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/hakuou-robotics-logo.png`;
+
   return (
     <main className="min-h-screen bg-[#f6f8fb] text-hakuou-ink">
       <div className="border-b border-hakuou-line bg-white">
@@ -92,7 +94,7 @@ function SurveyShell({
             ) : null}
             <div className="rounded bg-black px-2 py-1">
               <Image
-                src="/hakuou-robotics-logo.png"
+                src={logoSrc}
                 alt="HAKUOU ROBOTICS"
                 width={180}
                 height={72}

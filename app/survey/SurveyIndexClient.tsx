@@ -8,6 +8,7 @@ import { useEffect } from "react";
 export default function SurveyIndexClient() {
   const searchParams = useSearchParams();
   const eventSlug = searchParams.get("eventSlug") || searchParams.get("eventId");
+  const logoSrc = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/hakuou-robotics-logo.png`;
 
   useEffect(() => {
     if (eventSlug) {
@@ -22,7 +23,7 @@ export default function SurveyIndexClient() {
           <p className="text-sm font-bold text-hakuou-blue">HAKUOU ROBOTICS</p>
           <div className="rounded bg-black px-2 py-1">
             <Image
-              src="/hakuou-robotics-logo.png"
+              src={logoSrc}
               alt="HAKUOU ROBOTICS"
               width={180}
               height={72}
