@@ -22,24 +22,30 @@ createdAt/updatedAt: 更新日時
 基本形は次です。
 
 ```txt
-https://your-vercel-domain.example/survey/{eventSlug}
+https://new31005.github.io/hakuou-exhibition-survey/survey/{eventSlug}/
 ```
 
 例：
 
 ```txt
-https://your-vercel-domain.example/survey/fooma2026
+https://new31005.github.io/hakuou-exhibition-survey/survey/fooma2026/
 ```
 
 旧形式が必要な場合は次でもアクセスできます。
 
 ```txt
-https://your-vercel-domain.example/survey?eventId=fooma2026
+https://new31005.github.io/hakuou-exhibition-survey/survey?eventId=fooma2026
 ```
 
 ## 回答確認
 
-GAS Web App URLをブラウザで開くと集計画面が表示されます。
+公開集計ページを開き、GAS Web App URLと閲覧キーを入力して読み込みます。
+
+```txt
+https://new31005.github.io/hakuou-exhibition-survey/dashboard/
+```
+
+GAS Web App URLをブラウザで直接開いても、同じ集計画面を確認できます。
 
 確認できる内容：
 
@@ -86,6 +92,7 @@ GAS Web Appが最新バージョンでデプロイされているか
 展示会マスタに eventSlug が存在するか
 status が published になっているか
 APIキーを使う場合、Next.js側とGAS側の値が一致しているか
+集計ページのGAS Web App URLと閲覧キーが正しいか
 GAS実行ユーザーがスプレッドシートを編集できるか
 ```
 

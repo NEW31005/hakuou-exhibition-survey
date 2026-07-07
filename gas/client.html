@@ -3,6 +3,7 @@
   let filtersLoaded = false;
 
   document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('apiKey').value = sessionStorage.getItem('surveyDashboardApiKey') || '';
     document.getElementById('applyFilters').addEventListener('click', loadSummary);
     document.getElementById('resetFilters').addEventListener('click', resetFilters);
     document.querySelectorAll('[data-csv]').forEach(button => {
@@ -12,6 +13,7 @@
   });
 
   function loadSummary() {
+    sessionStorage.setItem('surveyDashboardApiKey', getValue('apiKey'));
     document.getElementById('responses').className = 'loading';
     document.getElementById('responses').textContent = '読み込み中...';
 
@@ -31,7 +33,8 @@
       requestedAction: getValue('requestedAction'),
       introductionTiming: getValue('introductionTiming'),
       contactPermission: getValue('contactPermission'),
-      keyword: getValue('keyword')
+      keyword: getValue('keyword'),
+      apiKey: getValue('apiKey')
     };
   }
 
@@ -283,6 +286,11 @@
     url.searchParams.set('type', type);
 
     const eventSlug = getValue('eventSlug');
+    const apiKey = getValue('apiKey');
+    if (apiKey) {
+      url.searchParams.set('apiKey', apiKey);
+    }
+
     if (type === 'event') {
       if (!eventSlug) {
         alert('展示会別CSVは、先に展示会を選択してください。');

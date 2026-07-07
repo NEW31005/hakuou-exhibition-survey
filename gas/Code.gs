@@ -133,6 +133,7 @@ function doGet(e) {
     }
 
     if (params.action === 'summary') {
+      validateApiKey_(params, {});
       return jsonOutput_({
         ok: true,
         data: getSummary_(params)
@@ -140,6 +141,7 @@ function doGet(e) {
     }
 
     if (params.action === 'csv') {
+      validateApiKey_(params, {});
       return csvOutput_(params);
     }
 
@@ -210,6 +212,7 @@ function doPost(e) {
 
 function getSummaryData(filters) {
   ensureBaseSheets_();
+  validateApiKey_(filters || {}, {});
   return getSummary_(filters || {});
 }
 

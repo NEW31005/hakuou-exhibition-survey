@@ -35,3 +35,17 @@ textarea {
 button {
   -webkit-tap-highlight-color: transparent;
 }
+
+@layer components {
+  .dashboard-input {
+    @apply mt-2 min-h-11 w-full rounded-md border border-hakuou-line bg-white px-3 py-2 text-sm font-bold outline-none transition focus:border-hakuou-blue focus:ring-4 focus:ring-blue-100;
+  }
+
+  .dashboard-button {
+    @apply inline-flex min-h-10 items-center justify-center rounded-md bg-slate-100 px-3 py-2 text-sm font-black text-hakuou-ink transition hover:bg-slate-200 disabled:cursor-wait disabled:opacity-60;
+  }
+
+  .dashboard-primary {
+    @apply bg-hakuou-blue text-white hover:bg-hakuou-navy;
+  }
+}

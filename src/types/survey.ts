@@ -53,6 +53,89 @@ export type SurveySubmitResponse = {
   leadRank?: LeadRank;
 };
 
+export type SummaryCount = {
+  name: string;
+  count: number;
+};
+
+export type SummaryFilterOption = {
+  value: string;
+  label: string;
+};
+
+export type SurveyEventSummary = {
+  eventSlug: string;
+  eventName: string;
+  venue: string;
+  startDate: string;
+  endDate: string;
+  status: EventStatus | string;
+  responseCount: number;
+  rankS: number;
+  rankA: number;
+  rankB: number;
+  rankC: number;
+  formUrl: string;
+};
+
+export type SurveyResponseSummary = {
+  id: string;
+  submittedAt: string;
+  eventSlug: string;
+  eventName: string;
+  companyName: string;
+  personName: string;
+  department: string;
+  email: string;
+  phone: string;
+  interests: string;
+  explanationRating: string;
+  issues: string;
+  automationTasks: string;
+  loadWeight: string;
+  loadType: string;
+  transportDistance: string;
+  considerationStatus: string;
+  introductionTiming: string;
+  budgetStatus: string;
+  userRole: string;
+  requestedActions: string;
+  freeComment: string;
+  contactPermission: string;
+  leadScore: number;
+  leadRank: LeadRank | string;
+  sourceUrl: string;
+};
+
+export type SurveySummaryData = {
+  generatedAt: string;
+  filters: {
+    events: SummaryFilterOption[];
+    leadRank: string[];
+    requestedActions: string[];
+    introductionTiming: string[];
+    contactPermission: string[];
+  };
+  events: SurveyEventSummary[];
+  summary: {
+    responseCount: number;
+    rankCounts: SummaryCount[];
+    requestedActionCounts: SummaryCount[];
+    introductionTimingCounts: SummaryCount[];
+    considerationStatusCounts: SummaryCount[];
+    issueCounts: SummaryCount[];
+    loadWeightCounts: SummaryCount[];
+    loadTypeCounts: SummaryCount[];
+  };
+  responses: SurveyResponseSummary[];
+};
+
+export type SurveySummaryResponse = {
+  ok: boolean;
+  data?: SurveySummaryData;
+  message?: string;
+};
+
 export type SurveyFieldKey = keyof Omit<
   SurveyFormData,
   "eventSlug" | "sourceUrl" | "userAgent" | "leadScore" | "leadRank"
