@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[31261,["/hakuou-exhibition-survey/_next/static/chunks/05-c3ty_6dwfk.js","/hakuou-exhibition-survey/_next/static/chunks/14mrh2-p_w84d.js","/hakuou-exhibition-survey/_next/static/chunks/2pinzhn0nkiw_.js"],"default"]
+2:I[31261,["/hakuou-exhibition-survey/_next/static/chunks/05-c3ty_6dwfk.js","/hakuou-exhibition-survey/_next/static/chunks/14mrh2-p_w84d.js","/hakuou-exhibition-survey/_next/static/chunks/2jjm_m7nhi7_p.js"],"default"]
 3:I[97367,["/hakuou-exhibition-survey/_next/static/chunks/05-c3ty_6dwfk.js","/hakuou-exhibition-survey/_next/static/chunks/14mrh2-p_w84d.js"],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"eventSlug":"yamazen-private-2026"}],[["$","script","script-0",{"src":"/hakuou-exhibition-survey/_next/static/chunks/2pinzhn0nkiw_.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"pNtF6HA_1SeXBJxaqn3Bv"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"eventSlug":"yamazen-private-2026"}],[["$","script","script-0",{"src":"/hakuou-exhibition-survey/_next/static/chunks/2jjm_m7nhi7_p.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"Wt4YRHTS9nqCIXV9tOcnH"}
 5:null
