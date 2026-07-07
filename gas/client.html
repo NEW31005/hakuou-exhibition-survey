@@ -179,7 +179,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('homeLink').href = appUrl({});
-    document.getElementById('dashboardLink').href = appUrl({ page: 'dashboard' });
+    document.getElementById('homeNavLink').href = appUrl({});
     document.getElementById('dashboardApiKey').value = sessionStorage.getItem('surveyDashboardApiKey') || '';
     document.getElementById('applyFilters').addEventListener('click', loadSummary);
     document.getElementById('resetFilters').addEventListener('click', resetFilters);
@@ -250,7 +250,7 @@
           <p class="muted small">${escapeHtml(event.eventSlug)}</p>
         </div>
         <div class="actions">
-          <a class="button primary" href="${escapeHtml(appUrl({ page: 'survey', eventSlug: event.eventSlug }))}">フォームを開く</a>
+          <a class="button primary" href="${escapeHtml(appUrl({ eventSlug: event.eventSlug }))}">フォームを開く</a>
         </div>
       </article>
     `).join('');

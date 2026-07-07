@@ -2,6 +2,7 @@ const DEFAULT_SPREADSHEET_ID = '1m8tRnUM7Y0XkIwjkyG6pv0kGqhjj5PV0zGzwJ5YLJ2Y';
 const EVENT_MASTER_SHEET_NAME = '展示会マスタ';
 const ALL_RESPONSES_SHEET_NAME = '全回答';
 const TIME_ZONE = 'Asia/Tokyo';
+const DASHBOARD_ALLOWED_DOMAIN = 'hakuou.co.jp';
 
 const EVENT_HEADERS = [
   'eventSlug',
@@ -53,7 +54,7 @@ const DEFAULT_EVENTS = [
     boothName: '山善ブース内',
     startDate: '2026-06-02',
     endDate: '2026-06-05',
-    status: 'published',
+    status: 'closed',
     description: ''
   },
   {
@@ -128,11 +129,12 @@ function doGet(e) {
       const eventSlug = trim_(params.eventSlug || params.eventId);
       const event = getEventBySlug(eventSlug);
       return jsonOutput_(event
-        ? { ok: true, event }
+        ? { ok: true, event: toPublicEvent_(event) }
         : { ok: false, message: '指定された展示会アンケートが見つかりません' });
     }
 
     if (params.action === 'summary') {
+      assertDashboardAccess_();
       validateApiKey_(params, {});
       return jsonOutput_({
         ok: true,
@@ -141,11 +143,15 @@ function doGet(e) {
     }
 
     if (params.action === 'csv') {
+      assertDashboardAccess_();
       validateApiKey_(params, {});
       return csvOutput_(params);
     }
 
     const page = normalizePage_(params);
+    if (page === 'dashboard') {
+      assertDashboardAccess_();
+    }
     return HtmlService
       .createTemplateFromFile('index')
       .evaluate()
@@ -174,6 +180,7 @@ function doPost(e) {
 
 function getSummaryData(filters) {
   ensureBaseSheets_();
+  assertDashboardAccess_();
   validateApiKey_(filters || {}, {});
   return getSummary_(filters || {});
 }
@@ -182,7 +189,7 @@ function getPublicEventsForWeb() {
   ensureBaseSheets_();
   const events = readObjects_(EVENT_MASTER_SHEET_NAME, EVENT_HEADERS)
     .map(toPublicEvent_)
-    .filter(event => event.status === 'published' || event.status === 'closed');
+    .filter(event => event.status === 'published');
 
   return {
     ok: true,
@@ -280,7 +287,7 @@ function saveSurveyResponse_(payload, params, shouldValidateApiKey) {
   if (!event) {
     throw new Error('指定された展示会アンケートが見つかりません。');
   }
-  if (event.status !== 'published') {
+  if (!isEventOpenForSurvey_(event)) {
     throw new Error('このアンケートは現在回答を受け付けていません。');
   }
 
@@ -388,6 +395,13 @@ function validateApiKey_(payload, params) {
   if (receivedApiKey !== expectedApiKey) {
     throw new Error('APIキーが正しくありません。');
   }
+}
+
+function assertDashboardAccess_() {
+  const email = trim_(Session.getActiveUser().getEmail()).toLowerCase();
+  if (email && email.endsWith(`@${DASHBOARD_ALLOWED_DOMAIN}`)) return;
+
+  throw new Error('集計ダッシュボードはハクオウ社員アカウント限定です。@hakuou.co.jp のGoogleアカウントでログインして開いてください。');
 }
 
 function normalizeResponsePayload_(payload) {
@@ -522,7 +536,7 @@ function buildEventSummaries_(events, rows) {
       venue: event.venue,
       startDate: event.startDate,
       endDate: event.endDate,
-      status: event.status,
+      status: getSurveyStatus_(event),
       responseCount: eventRows.length,
       rankS: rankCounts.S || 0,
       rankA: rankCounts.A || 0,
@@ -707,7 +721,7 @@ function sanitizeSheetName_(value) {
 function buildFormUrl_(eventSlug) {
   const scriptProperties = PropertiesService.getScriptProperties();
   const baseUrl = scriptProperties.getProperty('PUBLIC_FORM_BASE_URL') || '';
-  const query = `?page=survey&eventSlug=${encodeURIComponent(eventSlug)}`;
+  const query = `?eventSlug=${encodeURIComponent(eventSlug)}`;
   return baseUrl ? `${baseUrl.replace(/[?#].*$/, '')}${query}` : query;
 }
 
@@ -719,10 +733,30 @@ function toPublicEvent_(event) {
     boothName: trim_(event.boothName),
     startDate: formatDateValue_(event.startDate),
     endDate: formatDateValue_(event.endDate),
-    status: trim_(event.status),
+    status: getSurveyStatus_(event),
     description: trim_(event.description),
     formUrl: buildFormUrl_(event.eventSlug)
   };
+}
+
+function isEventOpenForSurvey_(event) {
+  return getSurveyStatus_(event) === 'published';
+}
+
+function getSurveyStatus_(event) {
+  const status = trim_(event.status);
+  if (status === 'published' && isPastEndDate_(event.endDate)) {
+    return 'closed';
+  }
+  return status;
+}
+
+function isPastEndDate_(value) {
+  const endDate = formatDateValue_(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return false;
+
+  const today = Utilities.formatDate(new Date(), TIME_ZONE, 'yyyy-MM-dd');
+  return endDate < today;
 }
 
 function jsonOutput_(payload) {

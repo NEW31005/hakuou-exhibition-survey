@@ -35,7 +35,7 @@ PUBLIC_FORM_BASE_URL=https://script.google.com/macros/s/xxxxx/exec
 SURVEY_API_KEY=任意の共有キー
 ```
 
-`SPREADSHEET_ID` は未設定でも既定値として指定スプレッドシートIDを使います。`PUBLIC_FORM_BASE_URL` はデプロイ後のWeb App URLを入れます。`SURVEY_API_KEY` は未設定ならキー検証を行いません。
+`SPREADSHEET_ID` は未設定でも既定値として指定スプレッドシートIDを使います。`PUBLIC_FORM_BASE_URL` は公開アンケート用Web App URLを入れます。`SURVEY_API_KEY` は未設定ならキー検証を行いません。
 
 ## 4. 初期セットアップを実行する
 
@@ -48,7 +48,7 @@ Apps Scriptエディタで `ensureSheet` または `doGet` を一度実行し、
 
 `展示会マスタ` には初期展示会データが追加されます。
 
-## 5. Webアプリとしてデプロイする
+## 5. 公開アンケートをWebアプリとしてデプロイする
 
 `デプロイ` → `新しいデプロイ` → 種類で `ウェブアプリ` を選択します。
 
@@ -61,23 +61,36 @@ Apps Scriptエディタで `ensureSheet` または `doGet` を一度実行し、
 
 展示会場の来場者端末から送信するため、ログイン必須の組織内限定にはしないでください。
 
-## 6. 公開URL
+## 6. 社員用集計アプリをデプロイする
 
-デプロイ後に表示されるWeb App URLが、そのままHPのトップページになります。
+同じGASコードを、集計用として別デプロイします。
+
+推奨設定：
+
+```txt
+実行ユーザー: 自分
+アクセスできるユーザー: 自分のドメイン内 / hakuou.co.jp
+```
+
+集計取得関数は `@hakuou.co.jp` のGoogleアカウント以外へデータを返しません。
+
+## 7. 公開URL
+
+公開アンケートのWeb App URLが、そのままアンケートHPのトップページになります。
 
 ```txt
 トップページ: https://script.google.com/macros/s/xxxxx/exec
-展示会別フォーム: https://script.google.com/macros/s/xxxxx/exec?page=survey&eventSlug=fooma2026
-集計ダッシュボード: https://script.google.com/macros/s/xxxxx/exec?page=dashboard
+展示会別フォーム: https://script.google.com/macros/s/xxxxx/exec?eventSlug=prologis-kasugai-2026
+社員用集計ダッシュボード: https://script.google.com/macros/s/yyyyy/exec?page=dashboard
 ```
 
 デプロイ後、同じURLを `PUBLIC_FORM_BASE_URL` に設定すると、集計画面内のフォームリンクもフルURLになります。
 
-## 7. 初回テスト
+## 8. 初回テスト
 
 1. `展示会マスタ` の対象展示会が `published` であることを確認します。
-2. `{GAS_WEB_APP_URL}?page=survey&eventSlug=fooma2026` からテスト回答を送信します。
-3. スプレッドシートに `fooma2026` タブが作成され、1行追記されることを確認します。
+2. `{SURVEY_WEB_APP_URL}?eventSlug=prologis-kasugai-2026` からテスト回答を送信します。
+3. スプレッドシートに該当 `eventSlug` のタブが作成され、1行追記されることを確認します。
 4. `全回答` タブにも同じ回答が追記されることを確認します。
-5. `{GAS_WEB_APP_URL}?page=dashboard` を開き、集計画面に回答が表示されることを確認します。
+5. `{DASHBOARD_WEB_APP_URL}?page=dashboard` をハクオウ社員アカウントで開き、集計画面に回答が表示されることを確認します。
 6. CSVボタンからBOM付きUTF-8のCSVが出力できることを確認します。

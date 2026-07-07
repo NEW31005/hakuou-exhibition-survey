@@ -9,19 +9,19 @@
 GAS WebアプリのURLを起点にします。
 
 ```txt
-トップページ: {GAS_WEB_APP_URL}
-展示会別フォーム: {GAS_WEB_APP_URL}?page=survey&eventSlug={eventSlug}
-集計ダッシュボード: {GAS_WEB_APP_URL}?page=dashboard
+公開アンケート: {SURVEY_WEB_APP_URL}
+展示会別フォーム: {SURVEY_WEB_APP_URL}?eventSlug={eventSlug}
+社員用集計ダッシュボード: {DASHBOARD_WEB_APP_URL}?page=dashboard
 ```
 
 例：
 
 ```txt
-{GAS_WEB_APP_URL}?page=survey&eventSlug=fooma2026
-{GAS_WEB_APP_URL}?page=survey&eventSlug=prologis-kasugai-2026
+{SURVEY_WEB_APP_URL}?eventSlug=star-seiki-showroom-2026
+{SURVEY_WEB_APP_URL}?eventSlug=prologis-kasugai-2026
 ```
 
-互換用として `{GAS_WEB_APP_URL}?eventSlug=fooma2026` または `{GAS_WEB_APP_URL}?eventId=fooma2026` でもフォームを表示します。
+互換用として `{SURVEY_WEB_APP_URL}?eventId=prologis-kasugai-2026` でもフォームを表示します。
 
 ## スプレッドシート構成
 
@@ -36,9 +36,10 @@ GAS WebアプリのURLを起点にします。
 ```txt
 展示会マスタ
 全回答
-fooma2026
-logis-tech-2026
-yamazen-private-2026
+star-seiki-showroom-2026
+prologis-kitakami-kanegasaki-2026
+prologis-kasugai-2026
+trc-rodge-seminar-2026
 ```
 
 展示会別タブは、回答保存時に存在しなければGASが自動作成します。
@@ -120,8 +121,8 @@ submitSurveyFromWeb(payload)
 
 ```txt
 getSummaryData(filters)
-GET {GAS_WEB_APP_URL}?action=summary
-GET {GAS_WEB_APP_URL}?action=csv&type=all
+GET {DASHBOARD_WEB_APP_URL}?action=summary
+GET {DASHBOARD_WEB_APP_URL}?action=csv&type=all
 ```
 
 外部POST互換：
@@ -147,5 +148,7 @@ Content-Type: text/plain;charset=utf-8
 ## セキュリティ方針
 
 回答フォームは公開URLから送信できます。集計画面や外部POSTを制限する場合は、GASのScript Propertiesに `SURVEY_API_KEY` を設定し、集計ダッシュボードの閲覧キー欄に同じ値を入力します。
+
+集計取得は `@hakuou.co.jp` のGoogleアカウント限定です。公開アンケート用URLから直接 `page=dashboard` や `action=summary` を呼んでも、社員アカウントとして確認できない場合はデータを返しません。
 
 個人情報をURLパラメータへ含めず、メールアドレスや電話番号をログへ過剰に出さない運用にします。
