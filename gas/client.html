@@ -180,8 +180,10 @@
   let currentData = null;
   let currentSurveyEvent = null;
   let filtersLoaded = false;
+  let initialRoute = null;
 
   document.addEventListener('DOMContentLoaded', () => {
+    initialRoute = readInitialRoute();
     document.getElementById('homeLink').href = appUrl({});
     document.getElementById('homeNavLink').href = appUrl({});
     document.getElementById('dashboardApiKey').value = sessionStorage.getItem('surveyDashboardApiKey') || '';
@@ -195,8 +197,8 @@
 
   function routeFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const eventSlug = params.get('eventSlug') || params.get('eventId') || '';
-    const page = params.get('page') || (eventSlug ? 'survey' : 'home');
+    const eventSlug = params.get('eventSlug') || params.get('eventId') || initialRoute.eventSlug || '';
+    const page = params.get('page') || initialRoute.page || (eventSlug ? 'survey' : 'home');
 
     showView(page === 'dashboard' ? 'dashboard' : page === 'survey' ? 'survey' : 'home');
 
@@ -211,6 +213,14 @@
     }
 
     loadHome();
+  }
+
+  function readInitialRoute() {
+    try {
+      return JSON.parse(document.body.dataset.initialRoute || '{}') || {};
+    } catch (error) {
+      return {};
+    }
   }
 
   function showView(name) {

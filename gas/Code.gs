@@ -153,8 +153,9 @@ function doGet(e) {
     if (page === 'dashboard') {
       assertDashboardAccess_();
     }
-    return HtmlService
-      .createTemplateFromFile('index')
+    const template = HtmlService.createTemplateFromFile('index');
+    template.initialRoute = JSON.stringify(buildInitialRoute_(params, page));
+    return template
       .evaluate()
       .setTitle(page === 'dashboard' ? '展示会アンケート集計' : 'HAKUOU ROBOTICS 展示会アンケート')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -706,6 +707,13 @@ function normalizePage_(params) {
   if (page === 'dashboard') return 'dashboard';
   if (page === 'survey' || params.eventSlug || params.eventId) return 'survey';
   return 'home';
+}
+
+function buildInitialRoute_(params, page) {
+  return {
+    page,
+    eventSlug: normalizeEventSlug_(params && (params.eventSlug || params.eventId))
+  };
 }
 
 function normalizeEventSlug_(value) {
