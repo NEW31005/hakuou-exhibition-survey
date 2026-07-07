@@ -75,6 +75,46 @@ const DEFAULT_EVENTS = [
     endDate: '',
     status: 'draft',
     description: ''
+  },
+  {
+    eventSlug: 'star-seiki-showroom-2026',
+    eventName: '(株)スター精機 新ショールーム',
+    venue: '〒480-0132 愛知県丹羽郡大口町秋田3丁目136-1',
+    boothName: 'スターテクノ併設',
+    startDate: '2026-07-14',
+    endDate: '2026-07-15',
+    status: 'published',
+    description: '日程は仮。前日搬入・後日搬出を含め4日間想定。'
+  },
+  {
+    eventSlug: 'prologis-kitakami-kanegasaki-2026',
+    eventName: 'プロロジスパーク北上金ヶ崎 内覧会',
+    venue: 'プロロジスパーク北上金ヶ崎',
+    boothName: '',
+    startDate: '2026-07-07',
+    endDate: '2026-07-08',
+    status: 'published',
+    description: ''
+  },
+  {
+    eventSlug: 'prologis-kasugai-2026',
+    eventName: 'プロロジスパーク春日井 内覧会',
+    venue: 'プロロジスパーク春日井',
+    boothName: '',
+    startDate: '2026-07-22',
+    endDate: '2026-07-23',
+    status: 'published',
+    description: ''
+  },
+  {
+    eventSlug: 'trc-rodge-seminar-2026',
+    eventName: 'TRC-RODGE 物流課題解決セミナー',
+    venue: 'TRC-RODGE',
+    boothName: '物流課題解決セミナー',
+    startDate: '2026-07-15',
+    endDate: '2026-07-15',
+    status: 'published',
+    description: ''
   }
 ];
 
