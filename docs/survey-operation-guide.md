@@ -1,4 +1,14 @@
-# 展示会アンケート 運用ガイド
+# 展示会アンケート GAS運用ガイド
+
+## 公開URL
+
+GAS WebアプリのURLを1つ公開すれば、トップページ、展示会別アンケート、集計ダッシュボードを使えます。
+
+```txt
+トップページ: {GAS_WEB_APP_URL}
+展示会別フォーム: {GAS_WEB_APP_URL}?page=survey&eventSlug={eventSlug}
+集計ダッシュボード: {GAS_WEB_APP_URL}?page=dashboard
+```
 
 ## 新しい展示会を追加する
 
@@ -17,35 +27,24 @@ createdAt/updatedAt: 更新日時
 
 公開前は `draft`、公開時に `published`、受付終了後は `closed` にします。
 
-## サンクスメールに記載するURL
+## 回答保存
 
-基本形は次です。
-
-```txt
-https://new31005.github.io/hakuou-exhibition-survey/survey/{eventSlug}/
-```
-
-例：
+GASフォームから送信された回答は、自動で次の2か所に保存されます。
 
 ```txt
-https://new31005.github.io/hakuou-exhibition-survey/survey/fooma2026/
+全回答
+{eventSlug} と同名の展示会別タブ
 ```
 
-旧形式が必要な場合は次でもアクセスできます。
-
-```txt
-https://new31005.github.io/hakuou-exhibition-survey/survey?eventId=fooma2026
-```
+展示会を切り替えるだけで、フォーム表示、保存先タブ、集計対象が切り替わります。
 
 ## 回答確認
 
-公開集計ページを開き、GAS Web App URLと閲覧キーを入力して読み込みます。
+集計ダッシュボードを開きます。
 
 ```txt
-https://new31005.github.io/hakuou-exhibition-survey/dashboard/
+{GAS_WEB_APP_URL}?page=dashboard
 ```
-
-GAS Web App URLをブラウザで直接開いても、同じ集計画面を確認できます。
 
 確認できる内容：
 
@@ -70,7 +69,7 @@ leadRank
 
 ## CSV出力
 
-集計画面上部のCSVボタンから出力します。
+集計画面のCSVボタンから出力します。
 
 ```txt
 展示会別CSV
@@ -82,20 +81,18 @@ S/AランクのみCSV
 
 CSVは日本語がExcelで文字化けしにくいBOM付きUTF-8です。
 
-## 回答が保存されないとき
+## 公開後に設定するプロパティ
 
-次を確認してください。
+GASのスクリプトプロパティで必要に応じて設定します。
 
 ```txt
-NEXT_PUBLIC_GAS_WEB_APP_URL が正しいか
-GAS Web Appが最新バージョンでデプロイされているか
-展示会マスタに eventSlug が存在するか
-status が published になっているか
-APIキーを使う場合、Next.js側とGAS側の値が一致しているか
-集計ページのGAS Web App URLと閲覧キーが正しいか
-GAS実行ユーザーがスプレッドシートを編集できるか
+SPREADSHEET_ID: 集計スプレッドシートID
+PUBLIC_FORM_BASE_URL: デプロイ後のGAS WebアプリURL
+SURVEY_API_KEY: 外部POSTや集計閲覧を制限する場合のキー
 ```
+
+`PUBLIC_FORM_BASE_URL` を設定すると、集計画面のフォームリンクもGAS WebアプリのフルURLで表示されます。
 
 ## 運用上の注意
 
-個人情報を扱うため、回答一覧やCSVの共有先を必要最小限にしてください。URLパラメータへ氏名、メールアドレス、電話番号などを含めないでください。
+回答結果には個人情報が含まれます。集計ダッシュボードのURL、閲覧キー、CSVの共有先は必要最小限にしてください。

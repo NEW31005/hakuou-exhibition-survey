@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   SummaryCount,
   SurveyEventSummary,
@@ -18,6 +18,71 @@ type DashboardFilters = {
   keyword: string;
 };
 
+type EventHeader =
+  | "eventSlug"
+  | "eventName"
+  | "venue"
+  | "boothName"
+  | "startDate"
+  | "endDate"
+  | "status"
+  | "description"
+  | "createdAt"
+  | "updatedAt";
+
+type ResponseHeader =
+  | "submittedAt"
+  | "eventSlug"
+  | "eventName"
+  | "companyName"
+  | "personName"
+  | "department"
+  | "email"
+  | "phone"
+  | "interests"
+  | "explanationRating"
+  | "issues"
+  | "automationTasks"
+  | "loadWeight"
+  | "loadType"
+  | "transportDistance"
+  | "considerationStatus"
+  | "introductionTiming"
+  | "budgetStatus"
+  | "userRole"
+  | "requestedActions"
+  | "freeComment"
+  | "contactPermission"
+  | "leadScore"
+  | "leadRank"
+  | "userAgent"
+  | "sourceUrl";
+
+type SheetRecord = Record<string, string>;
+type EventSheetRow = Record<EventHeader, string>;
+type ResponseCsvRow = Record<ResponseHeader, string>;
+type ResponseSheetRow = ResponseCsvRow & {
+  __rowId: string;
+  submittedAtText: string;
+  leadScoreNumber: number;
+};
+
+type GvizPrimitive = string | number | boolean | null;
+type GvizCell = { v?: GvizPrimitive; f?: string | null } | null;
+type GvizColumn = { id?: string; label?: string };
+type GvizRow = { c?: GvizCell[] };
+type GvizResponse = {
+  table?: {
+    cols?: GvizColumn[];
+    rows?: GvizRow[];
+  };
+};
+
+type SheetSummaryResult = {
+  data: SurveySummaryData;
+  csvRows: ResponseCsvRow[];
+};
+
 const initialFilters: DashboardFilters = {
   eventSlug: "",
   leadRank: "",
@@ -27,23 +92,73 @@ const initialFilters: DashboardFilters = {
   keyword: ""
 };
 
+const eventHeaders: EventHeader[] = [
+  "eventSlug",
+  "eventName",
+  "venue",
+  "boothName",
+  "startDate",
+  "endDate",
+  "status",
+  "description",
+  "createdAt",
+  "updatedAt"
+];
+
+const responseHeaders: ResponseHeader[] = [
+  "submittedAt",
+  "eventSlug",
+  "eventName",
+  "companyName",
+  "personName",
+  "department",
+  "email",
+  "phone",
+  "interests",
+  "explanationRating",
+  "issues",
+  "automationTasks",
+  "loadWeight",
+  "loadType",
+  "transportDistance",
+  "considerationStatus",
+  "introductionTiming",
+  "budgetStatus",
+  "userRole",
+  "requestedActions",
+  "freeComment",
+  "contactPermission",
+  "leadScore",
+  "leadRank",
+  "userAgent",
+  "sourceUrl"
+];
+
 const defaultGasUrl = process.env.NEXT_PUBLIC_GAS_WEB_APP_URL?.trim() || "";
+const defaultSpreadsheetId =
+  process.env.NEXT_PUBLIC_SPREADSHEET_ID?.trim() || "1m8tRnUM7Y0XkIwjkyG6pv0kGqhjj5PV0zGzwJ5YLJ2Y";
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const hasGasDataSource = Boolean(defaultGasUrl);
+const eventMasterSheetName = "展示会マスタ";
+const allResponsesSheetName = "全回答";
 
 export default function DashboardClient() {
-  const [gasUrl, setGasUrl] = useState(() => {
-    if (typeof window === "undefined") return defaultGasUrl;
-    return sessionStorage.getItem("surveyDashboardGasUrl") || defaultGasUrl;
-  });
   const [apiKey, setApiKey] = useState(() => {
-    if (typeof window === "undefined") return "";
+    if (typeof window === "undefined" || !hasGasDataSource) return "";
     return sessionStorage.getItem("surveyDashboardApiKey") || "";
   });
   const [filters, setFilters] = useState(initialFilters);
   const [data, setData] = useState<SurveySummaryData | null>(null);
+  const [sheetCsvRows, setSheetCsvRows] = useState<ResponseCsvRow[]>([]);
   const [selectedResponse, setSelectedResponse] = useState<SurveyResponseSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    void loadSummary(initialFilters);
+    // 初回表示で自動読み込みするため、ここだけ依存配列を固定します。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const kpis = useMemo(() => {
     const rankMap = toCountMap(data?.summary.rankCounts || []);
@@ -62,31 +177,35 @@ export default function DashboardClient() {
   async function loadSummary(nextFilters = filters) {
     setSelectedResponse(null);
     setError("");
-
-    if (!gasUrl.trim()) {
-      setData(null);
-      setError("GAS Web App URLを入力してください。GASデプロイ後に発行される /exec のURLです。");
-      return;
-    }
-
-    sessionStorage.setItem("surveyDashboardGasUrl", gasUrl.trim());
-    sessionStorage.setItem("surveyDashboardApiKey", apiKey.trim());
     setIsLoading(true);
 
-    try {
-      const response = await fetch(buildGasUrl("summary", nextFilters).toString(), {
-        cache: "no-store"
-      });
-      const payload = await response.json() as SurveySummaryResponse;
+    if (hasGasDataSource) {
+      sessionStorage.setItem("surveyDashboardApiKey", apiKey.trim());
+    }
 
-      if (!payload.ok || !payload.data) {
-        throw new Error(payload.message || "集計データを取得できませんでした。");
+    try {
+      if (hasGasDataSource) {
+        const response = await fetch(buildGasUrl("summary", nextFilters).toString(), {
+          cache: "no-store"
+        });
+        const payload = await response.json() as SurveySummaryResponse;
+
+        if (!response.ok || !payload.ok || !payload.data) {
+          throw new Error(payload.message || "集計データを取得できませんでした。");
+        }
+
+        setSheetCsvRows([]);
+        setData(payload.data);
+        return;
       }
 
-      setData(payload.data);
+      const result = await loadSpreadsheetSummary(nextFilters);
+      setSheetCsvRows(result.csvRows);
+      setData(result.data);
     } catch (fetchError) {
       setData(null);
-      setError(fetchError instanceof Error ? fetchError.message : "集計データを取得できませんでした。");
+      setSheetCsvRows([]);
+      setError(toDashboardError(fetchError));
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +221,7 @@ export default function DashboardClient() {
   }
 
   function buildGasUrl(action: "summary" | "csv", currentFilters = filters, csvType = "all") {
-    const url = new URL(gasUrl.trim());
+    const url = new URL(defaultGasUrl);
     url.searchParams.set("action", action);
 
     if (action === "csv") {
@@ -121,16 +240,23 @@ export default function DashboardClient() {
   }
 
   function openCsv(type: string) {
-    if (!gasUrl.trim()) {
-      setError("CSV出力にはGAS Web App URLが必要です。");
-      return;
-    }
     if (type === "event" && !filters.eventSlug) {
       setError("展示会別CSVは、先に展示会を選択してください。");
       return;
     }
 
-    window.open(buildGasUrl("csv", filters, type).toString(), "_blank", "noopener,noreferrer");
+    if (hasGasDataSource) {
+      window.open(buildGasUrl("csv", filters, type).toString(), "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (!sheetCsvRows.length) {
+      setError("CSV出力には、先に集計データを読み込んでください。");
+      return;
+    }
+
+    const rows = selectCsvRows(sheetCsvRows, type, filters.eventSlug);
+    downloadCsv(rows, type);
   }
 
   function eventFormUrl(event: SurveyEventSummary) {
@@ -161,37 +287,43 @@ export default function DashboardClient() {
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <section className="mb-4 rounded-lg border border-hakuou-line bg-white p-4 shadow-panel sm:p-5">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(180px,0.5fr)_auto] lg:items-end">
-            <label className="block text-sm font-black">
-              GAS Web App URL
-              <input
-                className="dashboard-input"
-                value={gasUrl}
-                onChange={(event) => setGasUrl(event.target.value)}
-                placeholder="https://script.google.com/macros/s/xxxxx/exec"
-              />
-            </label>
-            <label className="block text-sm font-black">
-              閲覧キー
-              <input
-                className="dashboard-input"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                placeholder="集計閲覧キー"
-                type="password"
-              />
-            </label>
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(180px,0.45fr)_auto] lg:items-end">
+            <div className="min-w-0">
+              <p className="text-xs font-black text-hakuou-muted">データ取得元</p>
+              <p className="mt-1 text-sm font-black">
+                {hasGasDataSource ? "GAS集計API" : "集計スプレッドシート"}
+              </p>
+              <p className="mt-1 truncate text-xs font-bold text-hakuou-muted" title={defaultSpreadsheetId}>
+                {hasGasDataSource ? "サイト設定済みのGASから自動取得" : defaultSpreadsheetId}
+              </p>
+            </div>
+            {hasGasDataSource ? (
+              <label className="block text-sm font-black">
+                閲覧キー
+                <input
+                  className="dashboard-input"
+                  value={apiKey}
+                  onChange={(event) => setApiKey(event.target.value)}
+                  placeholder="集計閲覧キー"
+                  type="password"
+                />
+              </label>
+            ) : (
+              <p className="text-xs font-bold leading-relaxed text-hakuou-muted">
+                公開読み取りできるスプレッドシートなら自動で読み込みます。
+              </p>
+            )}
             <button
               className="dashboard-button dashboard-primary min-h-11"
               disabled={isLoading}
               onClick={() => loadSummary()}
               type="button"
             >
-              {isLoading ? "読み込み中" : "集計を読み込む"}
+              {isLoading ? "読み込み中" : "集計を再読み込み"}
             </button>
           </div>
           <p className="mt-3 text-xs font-bold text-hakuou-muted">
-            回答結果には個人情報が含まれるため、閲覧キーはこのブラウザのセッション内だけに保存します。
+            回答結果には個人情報が含まれます。非公開のまま安全に自動表示する場合は、GASをデプロイしてURLをサイト設定に埋め込む方式を使います。
           </p>
         </section>
 
@@ -303,6 +435,329 @@ export default function DashboardClient() {
       </div>
     </main>
   );
+}
+
+async function loadSpreadsheetSummary(currentFilters: DashboardFilters): Promise<SheetSummaryResult> {
+  const [eventRecords, responseRecords] = await Promise.all([
+    fetchSheetRecords(eventMasterSheetName),
+    fetchSheetRecords(allResponsesSheetName)
+  ]);
+
+  const events = eventRecords.map(toEventRow).filter((event) => event.eventSlug);
+  const rows = responseRecords.map(toResponseRow).filter((row) => Object.values(row).some(Boolean));
+  const filteredRows = rows.filter((row) => matchesSummaryFilters(row, currentFilters));
+
+  return {
+    csvRows: rows.map(toCsvRow),
+    data: {
+      generatedAt: formatDateTime(new Date()),
+      filters: buildFilterOptions(rows, events),
+      events: buildEventSummaries(events, rows),
+      summary: {
+        responseCount: filteredRows.length,
+        rankCounts: countList(filteredRows, "leadRank"),
+        requestedActionCounts: countList(filteredRows, "requestedActions", true),
+        introductionTimingCounts: countList(filteredRows, "introductionTiming"),
+        considerationStatusCounts: countList(filteredRows, "considerationStatus"),
+        issueCounts: countList(filteredRows, "issues", true),
+        loadWeightCounts: countList(filteredRows, "loadWeight"),
+        loadTypeCounts: countList(filteredRows, "loadType", true)
+      },
+      responses: filteredRows.map(toPublicResponse)
+    }
+  };
+}
+
+async function fetchSheetRecords(sheetName: string): Promise<SheetRecord[]> {
+  const response = await fetch(buildSheetUrl(sheetName).toString(), { cache: "no-store" });
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        "集計スプレッドシートが非公開のため、この公開ページから直接読み取れません。非公開のまま安全に自動表示するには、GASをデプロイしてURLをサイト設定に埋め込む必要があります。"
+      );
+    }
+    throw new Error(`集計スプレッドシートを読み取れませんでした。HTTP ${response.status}`);
+  }
+
+  const text = await response.text();
+  const payload = parseGvizResponse(text);
+  const columns = payload.table?.cols || [];
+  const rows = payload.table?.rows || [];
+  const headers = columns.map((column) => trim(column.label || column.id));
+
+  return rows
+    .map((row) => {
+      const values = row.c || [];
+      return headers.reduce<SheetRecord>((record, header, index) => {
+        if (header) record[header] = formatCellValue(values[index]);
+        return record;
+      }, {});
+    })
+    .filter((record) => Object.values(record).some(Boolean));
+}
+
+function buildSheetUrl(sheetName: string) {
+  const url = new URL(`https://docs.google.com/spreadsheets/d/${defaultSpreadsheetId}/gviz/tq`);
+  url.searchParams.set("tqx", "out:json");
+  url.searchParams.set("sheet", sheetName);
+  url.searchParams.set("headers", "1");
+  return url;
+}
+
+function parseGvizResponse(text: string): GvizResponse {
+  const match = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);?/);
+  if (!match) {
+    throw new Error("集計スプレッドシートの応答形式を読み取れませんでした。");
+  }
+  return JSON.parse(match[1]) as GvizResponse;
+}
+
+function formatCellValue(cell: GvizCell) {
+  if (!cell) return "";
+  if (cell.f != null) return trim(cell.f);
+  if (cell.v == null) return "";
+  return trim(cell.v);
+}
+
+function toEventRow(record: SheetRecord): EventSheetRow {
+  return eventHeaders.reduce<EventSheetRow>((row, header) => {
+    row[header] = trim(record[header]);
+    return row;
+  }, emptyEventRow());
+}
+
+function toResponseRow(record: SheetRecord, index: number): ResponseSheetRow {
+  const row = responseHeaders.reduce<ResponseCsvRow>((current, header) => {
+    current[header] = trim(record[header]);
+    return current;
+  }, emptyResponseRow());
+
+  return {
+    ...row,
+    __rowId: String(index + 2),
+    submittedAtText: row.submittedAt,
+    leadScoreNumber: Number(row.leadScore || 0)
+  };
+}
+
+function emptyEventRow(): EventSheetRow {
+  return eventHeaders.reduce<EventSheetRow>((row, header) => {
+    row[header] = "";
+    return row;
+  }, {} as EventSheetRow);
+}
+
+function emptyResponseRow(): ResponseCsvRow {
+  return responseHeaders.reduce<ResponseCsvRow>((row, header) => {
+    row[header] = "";
+    return row;
+  }, {} as ResponseCsvRow);
+}
+
+function toCsvRow(row: ResponseSheetRow): ResponseCsvRow {
+  return responseHeaders.reduce<ResponseCsvRow>((csvRow, header) => {
+    csvRow[header] = row[header];
+    return csvRow;
+  }, emptyResponseRow());
+}
+
+function buildEventSummaries(events: EventSheetRow[], rows: ResponseSheetRow[]): SurveyEventSummary[] {
+  return events.map((event) => {
+    const eventRows = rows.filter((row) => row.eventSlug === event.eventSlug);
+    const rankCounts = toCountMap(countList(eventRows, "leadRank"));
+
+    return {
+      eventSlug: event.eventSlug,
+      eventName: event.eventName,
+      venue: event.venue,
+      startDate: event.startDate,
+      endDate: event.endDate,
+      status: event.status,
+      responseCount: eventRows.length,
+      rankS: rankCounts.S || 0,
+      rankA: rankCounts.A || 0,
+      rankB: rankCounts.B || 0,
+      rankC: rankCounts.C || 0,
+      formUrl: `${publicBasePath}/survey/${event.eventSlug}/`
+    };
+  });
+}
+
+function buildFilterOptions(rows: ResponseSheetRow[], events: EventSheetRow[]) {
+  return {
+    events: events.map((event) => ({
+      value: event.eventSlug,
+      label: `${event.eventName} (${event.eventSlug})`
+    })),
+    leadRank: uniqueSorted(rows.map((row) => row.leadRank)),
+    requestedActions: uniqueSorted(splitAll(rows.map((row) => row.requestedActions))),
+    introductionTiming: uniqueSorted(rows.map((row) => row.introductionTiming)),
+    contactPermission: uniqueSorted(rows.map((row) => row.contactPermission))
+  };
+}
+
+function matchesSummaryFilters(row: ResponseSheetRow, currentFilters: DashboardFilters) {
+  const eventSlug = trim(currentFilters.eventSlug);
+  const leadRank = trim(currentFilters.leadRank);
+  const requestedAction = trim(currentFilters.requestedAction);
+  const introductionTiming = trim(currentFilters.introductionTiming);
+  const contactPermission = trim(currentFilters.contactPermission);
+  const keyword = trim(currentFilters.keyword).toLowerCase();
+
+  if (eventSlug && row.eventSlug !== eventSlug) return false;
+  if (leadRank && row.leadRank !== leadRank) return false;
+  if (requestedAction && !splitValues(row.requestedActions).includes(requestedAction)) return false;
+  if (introductionTiming && row.introductionTiming !== introductionTiming) return false;
+  if (contactPermission && row.contactPermission !== contactPermission) return false;
+
+  if (keyword) {
+    const target = [
+      row.companyName,
+      row.personName,
+      row.department,
+      row.email,
+      row.phone,
+      row.issues,
+      row.requestedActions,
+      row.freeComment
+    ].join(" ").toLowerCase();
+    if (!target.includes(keyword)) return false;
+  }
+
+  return true;
+}
+
+function toPublicResponse(row: ResponseSheetRow): SurveyResponseSummary {
+  return {
+    id: row.__rowId,
+    submittedAt: row.submittedAtText,
+    eventSlug: row.eventSlug,
+    eventName: row.eventName,
+    companyName: row.companyName,
+    personName: row.personName,
+    department: row.department,
+    email: row.email,
+    phone: row.phone,
+    interests: row.interests,
+    explanationRating: row.explanationRating,
+    issues: row.issues,
+    automationTasks: row.automationTasks,
+    loadWeight: row.loadWeight,
+    loadType: row.loadType,
+    transportDistance: row.transportDistance,
+    considerationStatus: row.considerationStatus,
+    introductionTiming: row.introductionTiming,
+    budgetStatus: row.budgetStatus,
+    userRole: row.userRole,
+    requestedActions: row.requestedActions,
+    freeComment: row.freeComment,
+    contactPermission: row.contactPermission,
+    leadScore: row.leadScoreNumber,
+    leadRank: row.leadRank,
+    sourceUrl: row.sourceUrl
+  };
+}
+
+function selectCsvRows(rows: ResponseCsvRow[], type: string, eventSlug: string) {
+  if (type === "event") {
+    return rows.filter((row) => row.eventSlug === eventSlug);
+  }
+  if (type === "highRank") {
+    return rows.filter((row) => row.leadRank === "S" || row.leadRank === "A");
+  }
+  if (type === "siteVisit") {
+    return rows.filter((row) => splitValues(row.requestedActions).includes("現地調査を依頼したい"));
+  }
+  if (type === "estimate") {
+    return rows.filter((row) => splitValues(row.requestedActions).includes("価格・見積感を知りたい"));
+  }
+  return rows;
+}
+
+function downloadCsv(rows: ResponseCsvRow[], type: string) {
+  const csvRows = [
+    responseHeaders,
+    ...rows.map((row) => responseHeaders.map((header) => row[header] || ""))
+  ];
+  const csv = `\uFEFF${csvRows.map((row) => row.map(escapeCsv).join(",")).join("\r\n")}`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `hakuou-survey-${type}-${formatDateForFile(new Date())}.csv`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function countList(rows: ResponseSheetRow[], field: keyof ResponseCsvRow, split = false): SummaryCount[] {
+  const counts = rows.reduce<Record<string, number>>((acc, row) => {
+    const values = split ? splitValues(row[field]) : [trim(row[field]) || "未入力"];
+    values.forEach((value) => {
+      acc[value] = (acc[value] || 0) + 1;
+    });
+    return acc;
+  }, {});
+
+  return Object.keys(counts)
+    .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, "ja"))
+    .map((name) => ({ name, count: counts[name] }));
+}
+
+function splitAll(values: string[]) {
+  return values.reduce<string[]>((acc, value) => acc.concat(splitValues(value)), []);
+}
+
+function splitValues(value: string) {
+  return trim(value)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function uniqueSorted(values: string[]) {
+  return Array.from(new Set(values.map(trim).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ja"));
+}
+
+function escapeCsv(value: string) {
+  const normalized = value == null ? "" : String(value);
+  if (!/[",\r\n]/.test(normalized)) return normalized;
+  return `"${normalized.replace(/"/g, '""')}"`;
+}
+
+function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function formatDateForFile(date: Date) {
+  const parts = new Intl.DateTimeFormat("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}${values.month}${values.day}`;
+}
+
+function toDashboardError(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return "集計データを取得できませんでした。";
+}
+
+function trim(value: unknown) {
+  return value == null ? "" : String(value).trim();
 }
 
 function SelectFilter({

@@ -31,11 +31,11 @@ Apps Scriptエディタのプロジェクト設定から、必要に応じて次
 
 ```txt
 SPREADSHEET_ID=1m8tRnUM7Y0XkIwjkyG6pv0kGqhjj5PV0zGzwJ5YLJ2Y
-PUBLIC_FORM_BASE_URL=https://your-vercel-domain.example
+PUBLIC_FORM_BASE_URL=https://script.google.com/macros/s/xxxxx/exec
 SURVEY_API_KEY=任意の共有キー
 ```
 
-`SPREADSHEET_ID` は未設定でも既定値として指定スプレッドシートIDを使います。`SURVEY_API_KEY` は未設定ならAPIキー検証を行いません。
+`SPREADSHEET_ID` は未設定でも既定値として指定スプレッドシートIDを使います。`PUBLIC_FORM_BASE_URL` はデプロイ後のWeb App URLを入れます。`SURVEY_API_KEY` は未設定ならキー検証を行いません。
 
 ## 4. 初期セットアップを実行する
 
@@ -46,7 +46,7 @@ Apps Scriptエディタで `ensureSheet` または `doGet` を一度実行し、
 全回答
 ```
 
-`展示会マスタ` には初期データとして `fooma2026`、`logis-tech-2026`、`yamazen-private-2026` が追加されます。
+`展示会マスタ` には初期展示会データが追加されます。
 
 ## 5. Webアプリとしてデプロイする
 
@@ -61,37 +61,23 @@ Apps Scriptエディタで `ensureSheet` または `doGet` を一度実行し、
 
 展示会場の来場者端末から送信するため、ログイン必須の組織内限定にはしないでください。
 
-## 6. Web App URLを取得する
+## 6. 公開URL
 
-デプロイ後に表示されるWeb App URLを控えます。Next.js側の `.env.local` に設定します。
-
-```txt
-NEXT_PUBLIC_GAS_WEB_APP_URL=https://script.google.com/macros/s/xxxxx/exec
-NEXT_PUBLIC_SURVEY_API_KEY=Script PropertiesのSURVEY_API_KEYと同じ値
-```
-
-APIキーを使わない場合、`NEXT_PUBLIC_SURVEY_API_KEY` は空で構いません。
-
-## 7. Next.js側を確認する
-
-ローカルで次を実行し、フォームが表示されることを確認します。
+デプロイ後に表示されるWeb App URLが、そのままHPのトップページになります。
 
 ```txt
-npm install
-npm run dev
+トップページ: https://script.google.com/macros/s/xxxxx/exec
+展示会別フォーム: https://script.google.com/macros/s/xxxxx/exec?page=survey&eventSlug=fooma2026
+集計ダッシュボード: https://script.google.com/macros/s/xxxxx/exec?page=dashboard
 ```
 
-確認URL：
+デプロイ後、同じURLを `PUBLIC_FORM_BASE_URL` に設定すると、集計画面内のフォームリンクもフルURLになります。
 
-```txt
-http://localhost:3000/survey/fooma2026
-```
+## 7. 初回テスト
 
-## 8. 初回テスト
-
-1. `展示会マスタ` の `fooma2026` が `published` であることを確認します。
-2. `/survey/fooma2026` からテスト回答を送信します。
+1. `展示会マスタ` の対象展示会が `published` であることを確認します。
+2. `{GAS_WEB_APP_URL}?page=survey&eventSlug=fooma2026` からテスト回答を送信します。
 3. スプレッドシートに `fooma2026` タブが作成され、1行追記されることを確認します。
 4. `全回答` タブにも同じ回答が追記されることを確認します。
-5. GAS Web App URLをブラウザで開き、集計画面に回答が表示されることを確認します。
+5. `{GAS_WEB_APP_URL}?page=dashboard` を開き、集計画面に回答が表示されることを確認します。
 6. CSVボタンからBOM付きUTF-8のCSVが出力できることを確認します。

@@ -1,92 +1,162 @@
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <p class="brand-kicker">HAKUOU ROBOTICS</p>
-      <p class="brand-title">展示会アンケート集計</p>
-    </div>
-    <div class="actions">
-      <button class="csv" data-csv="event">展示会別CSV</button>
-      <button class="csv" data-csv="all">全回答CSV</button>
-      <button class="csv" data-csv="highRank">S/A CSV</button>
-      <button class="csv" data-csv="siteVisit">現地調査CSV</button>
-      <button class="csv" data-csv="estimate">見積CSV</button>
-    </div>
+    <a class="brand" id="homeLink" href="?">
+      <div>
+        <p class="brand-kicker">HAKUOU ROBOTICS</p>
+        <p class="brand-title">展示会アンケート</p>
+      </div>
+      <img
+        class="brand-logo"
+        src="https://raw.githubusercontent.com/NEW31005/hakuou-exhibition-survey/main/public/hakuou-robotics-logo.png"
+        alt="HAKUOU ROBOTICS"
+      >
+    </a>
+    <nav class="nav">
+      <a class="button" id="dashboardLink" href="?page=dashboard">集計</a>
+    </nav>
   </div>
 </div>
 
 <main class="page">
-  <section class="hero">
-    <div>
-      <h1>展示会ごとの回答状況と有望リードを確認</h1>
-      <p class="muted">
-        展示会別の件数、希望対応、導入時期、現場課題、回答詳細を横断して確認できます。
-      </p>
+  <section id="homeView" data-view="home">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">EXHIBITION SURVEY SYSTEM</p>
+        <h1>展示会ごとのアンケートと集計をGASで一元管理</h1>
+        <p class="muted">
+          展示会を選ぶだけでフォームが切り替わり、回答は集計スプレッドシートの展示会別タブと全回答タブへ保存されます。
+        </p>
+      </div>
+      <a class="button primary" href="?page=dashboard">集計を見る</a>
     </div>
-    <div id="generatedAt" class="generated">読み込み中...</div>
-  </section>
 
-  <section class="panel">
-    <h2>絞り込み</h2>
-    <div class="filters">
-      <label>
-        展示会
-        <select id="eventSlug"></select>
-      </label>
-      <label>
-        leadRank
-        <select id="leadRank"></select>
-      </label>
-      <label>
-        希望対応
-        <select id="requestedAction"></select>
-      </label>
-      <label>
-        導入時期
-        <select id="introductionTiming"></select>
-      </label>
-      <label>
-        連絡可否
-        <select id="contactPermission"></select>
-      </label>
-      <label>
-        キーワード
-        <input id="keyword" type="search" placeholder="会社名・氏名・自由記述など">
-      </label>
-      <label>
-        閲覧キー
-        <input id="apiKey" type="password" placeholder="集計閲覧キー">
-      </label>
-    </div>
-    <div class="actions" style="margin-top: 14px;">
-      <button class="primary" id="applyFilters">適用</button>
-      <button id="resetFilters">解除</button>
-    </div>
-  </section>
-
-  <section class="panel">
-    <h2>全展示会横断集計</h2>
-    <div id="kpis" class="kpi-grid"></div>
-  </section>
-
-  <section class="panel">
-    <h2>展示会一覧</h2>
-    <div id="events"></div>
-  </section>
-
-  <div class="grid">
     <section class="panel">
-      <h2>展示会別集計</h2>
-      <div id="summaryCharts"></div>
+      <div class="section-head">
+        <div>
+          <h2>公開中の展示会アンケート</h2>
+          <p class="muted small">サンクスメールには、各展示会のフォームURLを記載してください。</p>
+        </div>
+      </div>
+      <div id="homeEvents" class="loading">読み込み中...</div>
+    </section>
+  </section>
+
+  <section id="surveyView" data-view="survey" hidden>
+    <div id="surveyStatus" class="loading">展示会情報を確認しています...</div>
+    <div id="surveyShell" hidden>
+      <header class="survey-header">
+        <div>
+          <p class="eyebrow" id="surveySlug"></p>
+          <h1 id="surveyTitle"></h1>
+          <p class="muted" id="surveyLead"></p>
+        </div>
+        <div class="event-meta">
+          <div id="surveyVenue"></div>
+          <div id="surveyDate"></div>
+        </div>
+      </header>
+      <div id="surveyComplete" class="panel success-panel" hidden>
+        <p class="eyebrow">送信完了</p>
+        <h2>ありがとうございました</h2>
+        <p class="muted">
+          内容を確認のうえ、必要に応じて弊社担当者よりご連絡させていただきます。
+          今後ともハクオウロボティクスをよろしくお願いいたします。
+        </p>
+      </div>
+      <form id="surveyForm" class="survey-form" novalidate></form>
+    </div>
+  </section>
+
+  <section id="dashboardView" data-view="dashboard" hidden>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">SURVEY DASHBOARD</p>
+        <h1>全展示会の回答状況と有望リードを確認</h1>
+        <p class="muted">
+          展示会別の件数、希望対応、導入時期、現場課題、回答詳細を横断して確認できます。
+        </p>
+      </div>
+      <div id="generatedAt" class="generated">読み込み中...</div>
+    </div>
+
+    <section class="panel">
+      <div class="section-head">
+        <h2>絞り込み</h2>
+        <div class="actions">
+          <button class="primary" id="applyFilters" type="button">適用</button>
+          <button id="resetFilters" type="button">解除</button>
+        </div>
+      </div>
+      <div class="filters">
+        <label>
+          展示会
+          <select id="filterEventSlug"></select>
+        </label>
+        <label>
+          leadRank
+          <select id="filterLeadRank"></select>
+        </label>
+        <label>
+          希望対応
+          <select id="filterRequestedAction"></select>
+        </label>
+        <label>
+          導入時期
+          <select id="filterIntroductionTiming"></select>
+        </label>
+        <label>
+          連絡可否
+          <select id="filterContactPermission"></select>
+        </label>
+        <label>
+          キーワード
+          <input id="filterKeyword" type="search" placeholder="会社名・氏名など">
+        </label>
+        <label>
+          閲覧キー
+          <input id="dashboardApiKey" type="password" placeholder="集計閲覧キー">
+        </label>
+      </div>
     </section>
 
     <section class="panel">
-      <h2>回答詳細</h2>
-      <div id="responseDetail" class="empty">回答一覧から行を選択してください。</div>
+      <div class="section-head">
+        <h2>CSV出力</h2>
+      </div>
+      <div class="actions">
+        <button class="csv" data-csv="all" type="button">全回答CSV</button>
+        <button class="csv" data-csv="event" type="button">展示会別CSV</button>
+        <button class="csv" data-csv="highRank" type="button">S/A CSV</button>
+        <button class="csv" data-csv="siteVisit" type="button">現地調査CSV</button>
+        <button class="csv" data-csv="estimate" type="button">見積CSV</button>
+      </div>
     </section>
-  </div>
 
-  <section class="panel">
-    <h2>展示会別回答一覧</h2>
-    <div id="responses" class="loading">読み込み中...</div>
+    <section class="panel">
+      <h2>全展示会横断集計</h2>
+      <div id="kpis" class="kpi-grid"></div>
+    </section>
+
+    <section class="panel">
+      <h2>展示会一覧</h2>
+      <div id="events"></div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>展示会別集計</h2>
+        <div id="summaryCharts"></div>
+      </section>
+
+      <section class="panel">
+        <h2>回答詳細</h2>
+        <div id="responseDetail" class="empty">回答一覧から行を選択してください。</div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>展示会別回答一覧</h2>
+      <div id="responses" class="loading">読み込み中...</div>
+    </section>
   </section>
 </main>

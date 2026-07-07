@@ -2,25 +2,26 @@
 
 ## 概要
 
-ハクオウロボティクスの展示会後アンケートは、Next.jsの公開フォームとGoogle Apps Scriptの保存APIで構成します。Next.js側はDBを持たず、回答送信時にGAS Web AppへPOSTします。GAS側はGoogleスプレッドシートへ保存し、同じGAS Web Appで集計画面とCSV出力も提供します。
+ハクオウロボティクスの展示会後アンケートは、Google Apps ScriptのWebアプリとGoogleスプレッドシートで構成します。GAS Webアプリがトップページ、展示会別フォーム、集計ダッシュボード、CSV出力を提供し、回答保存も同じGAS内で行います。
 
 ## URL設計
 
-フォームは展示会ごとに以下のURLで公開します。
+GAS WebアプリのURLを起点にします。
 
 ```txt
-/survey/[eventSlug]
+トップページ: {GAS_WEB_APP_URL}
+展示会別フォーム: {GAS_WEB_APP_URL}?page=survey&eventSlug={eventSlug}
+集計ダッシュボード: {GAS_WEB_APP_URL}?page=dashboard
 ```
 
 例：
 
 ```txt
-/survey/fooma2026
-/survey/logis-tech-2026
-/survey/yamazen-private-2026
+{GAS_WEB_APP_URL}?page=survey&eventSlug=fooma2026
+{GAS_WEB_APP_URL}?page=survey&eventSlug=prologis-kasugai-2026
 ```
 
-互換用として `/survey?eventId=fooma2026` または `/survey?eventSlug=fooma2026` でもアクセスでき、該当する `/survey/[eventSlug]` に遷移します。
+互換用として `{GAS_WEB_APP_URL}?eventSlug=fooma2026` または `{GAS_WEB_APP_URL}?eventId=fooma2026` でもフォームを表示します。
 
 ## スプレッドシート構成
 
@@ -105,26 +106,34 @@ sourceUrl
 
 複数選択項目はカンマ区切り文字列で保存します。
 
-## API
+## GAS関数
 
-展示会情報取得：
+フォーム表示用：
 
 ```txt
-GET {GAS_WEB_APP_URL}?action=getEvent&eventSlug=fooma2026
+getPublicEventsForWeb()
+getEventForWeb(eventSlug)
+submitSurveyFromWeb(payload)
 ```
 
-回答送信：
+集計表示用：
+
+```txt
+getSummaryData(filters)
+GET {GAS_WEB_APP_URL}?action=summary
+GET {GAS_WEB_APP_URL}?action=csv&type=all
+```
+
+外部POST互換：
 
 ```txt
 POST {GAS_WEB_APP_URL}
 Content-Type: text/plain;charset=utf-8
 ```
 
-本文はJSON文字列です。GAS側で `eventSlug`、必須項目、展示会の公開状態、APIキーを検証します。
-
 ## leadScore / leadRank
 
-スコアはNext.js側でも計算しますが、保存時はGAS側で再計算した値を正とします。
+保存時はGAS側でスコアを再計算した値を正とします。
 
 ランク条件：
 
@@ -137,6 +146,6 @@ Content-Type: text/plain;charset=utf-8
 
 ## セキュリティ方針
 
-GAS Web App URLはNext.jsの環境変数 `NEXT_PUBLIC_GAS_WEB_APP_URL` で管理します。簡易APIキーを使う場合は、Next.js側に `NEXT_PUBLIC_SURVEY_API_KEY`、GAS側のScript Propertiesに `SURVEY_API_KEY` を設定します。
+回答フォームは公開URLから送信できます。集計画面や外部POSTを制限する場合は、GASのScript Propertiesに `SURVEY_API_KEY` を設定し、集計ダッシュボードの閲覧キー欄に同じ値を入力します。
 
 個人情報をURLパラメータへ含めず、メールアドレスや電話番号をログへ過剰に出さない運用にします。

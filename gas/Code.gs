@@ -145,10 +145,11 @@ function doGet(e) {
       return csvOutput_(params);
     }
 
+    const page = normalizePage_(params);
     return HtmlService
       .createTemplateFromFile('index')
       .evaluate()
-      .setTitle('展示会アンケート集計')
+      .setTitle(page === 'dashboard' ? '展示会アンケート集計' : 'HAKUOU ROBOTICS 展示会アンケート')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (error) {
     return jsonOutput_({
@@ -161,47 +162,8 @@ function doGet(e) {
 function doPost(e) {
   try {
     ensureBaseSheets_();
-
     const payload = parsePostPayload_(e);
-    validateApiKey_(payload, (e && e.parameter) || {});
-
-    const eventSlug = normalizeEventSlug_(payload.eventSlug || payload.eventId);
-    if (!eventSlug) {
-      throw new Error('eventSlugが指定されていません。');
-    }
-
-    const event = getEventBySlug(eventSlug);
-    if (!event) {
-      throw new Error('指定された展示会アンケートが見つかりません。');
-    }
-    if (event.status !== 'published') {
-      throw new Error('このアンケートは現在回答を受け付けていません。');
-    }
-
-    const normalized = normalizeResponsePayload_(payload);
-    validateResponsePayload_(normalized);
-
-    const leadScore = calculateLeadScore(normalized);
-    const leadRank = getLeadRank(leadScore);
-    const submittedAt = new Date();
-    const row = buildResponseRow_(normalized, event, submittedAt, leadScore, leadRank);
-
-    const lock = LockService.getScriptLock();
-    lock.waitLock(30000);
-
-    try {
-      appendResponse(eventSlug, row);
-      appendResponse(ALL_RESPONSES_SHEET_NAME, row);
-    } finally {
-      lock.releaseLock();
-    }
-
-    return jsonOutput_({
-      ok: true,
-      message: '回答を保存しました',
-      leadScore,
-      leadRank
-    });
+    return jsonOutput_(saveSurveyResponse_(payload, (e && e.parameter) || {}, true));
   } catch (error) {
     return jsonOutput_({
       ok: false,
@@ -214,6 +176,31 @@ function getSummaryData(filters) {
   ensureBaseSheets_();
   validateApiKey_(filters || {}, {});
   return getSummary_(filters || {});
+}
+
+function getPublicEventsForWeb() {
+  ensureBaseSheets_();
+  const events = readObjects_(EVENT_MASTER_SHEET_NAME, EVENT_HEADERS)
+    .map(toPublicEvent_)
+    .filter(event => event.status === 'published' || event.status === 'closed');
+
+  return {
+    ok: true,
+    events
+  };
+}
+
+function getEventForWeb(eventSlug) {
+  ensureBaseSheets_();
+  const event = getEventBySlug(eventSlug);
+  return event
+    ? { ok: true, event: toPublicEvent_(event) }
+    : { ok: false, message: '指定された展示会アンケートが見つかりません。' };
+}
+
+function submitSurveyFromWeb(payload) {
+  ensureBaseSheets_();
+  return saveSurveyResponse_(payload || {}, {}, false);
 }
 
 function ensureSheet(sheetName) {
@@ -277,6 +264,50 @@ function appendResponse(sheetName, row) {
 
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+function saveSurveyResponse_(payload, params, shouldValidateApiKey) {
+  if (shouldValidateApiKey) {
+    validateApiKey_(payload, params || {});
+  }
+
+  const eventSlug = normalizeEventSlug_(payload.eventSlug || payload.eventId);
+  if (!eventSlug) {
+    throw new Error('eventSlugが指定されていません。');
+  }
+
+  const event = getEventBySlug(eventSlug);
+  if (!event) {
+    throw new Error('指定された展示会アンケートが見つかりません。');
+  }
+  if (event.status !== 'published') {
+    throw new Error('このアンケートは現在回答を受け付けていません。');
+  }
+
+  const normalized = normalizeResponsePayload_(payload);
+  validateResponsePayload_(normalized);
+
+  const leadScore = calculateLeadScore(normalized);
+  const leadRank = getLeadRank(leadScore);
+  const submittedAt = new Date();
+  const row = buildResponseRow_(normalized, event, submittedAt, leadScore, leadRank);
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    appendResponse(eventSlug, row);
+    appendResponse(ALL_RESPONSES_SHEET_NAME, row);
+  } finally {
+    lock.releaseLock();
+  }
+
+  return {
+    ok: true,
+    message: '回答を保存しました',
+    leadScore,
+    leadRank
+  };
 }
 
 function ensureBaseSheets_() {
@@ -655,6 +686,13 @@ function normalizeArray_(value) {
   return splitValues_(value);
 }
 
+function normalizePage_(params) {
+  const page = trim_(params && params.page).toLowerCase();
+  if (page === 'dashboard') return 'dashboard';
+  if (page === 'survey' || params.eventSlug || params.eventId) return 'survey';
+  return 'home';
+}
+
 function normalizeEventSlug_(value) {
   const slug = trim_(value).toLowerCase();
   return /^[a-z0-9][a-z0-9-]{1,80}$/.test(slug) ? slug : '';
@@ -669,7 +707,22 @@ function sanitizeSheetName_(value) {
 function buildFormUrl_(eventSlug) {
   const scriptProperties = PropertiesService.getScriptProperties();
   const baseUrl = scriptProperties.getProperty('PUBLIC_FORM_BASE_URL') || '';
-  return baseUrl ? `${baseUrl.replace(/\/$/, '')}/survey/${eventSlug}` : `/survey/${eventSlug}`;
+  const query = `?page=survey&eventSlug=${encodeURIComponent(eventSlug)}`;
+  return baseUrl ? `${baseUrl.replace(/[?#].*$/, '')}${query}` : query;
+}
+
+function toPublicEvent_(event) {
+  return {
+    eventSlug: trim_(event.eventSlug),
+    eventName: trim_(event.eventName),
+    venue: trim_(event.venue),
+    boothName: trim_(event.boothName),
+    startDate: formatDateValue_(event.startDate),
+    endDate: formatDateValue_(event.endDate),
+    status: trim_(event.status),
+    description: trim_(event.description),
+    formUrl: buildFormUrl_(event.eventSlug)
+  };
 }
 
 function jsonOutput_(payload) {
@@ -685,6 +738,10 @@ function escapeCsv_(value) {
 
 function formatDateTime_(date) {
   return Utilities.formatDate(date, TIME_ZONE, 'yyyy-MM-dd HH:mm:ss');
+}
+
+function formatDateValue_(value) {
+  return value instanceof Date ? Utilities.formatDate(value, TIME_ZONE, 'yyyy-MM-dd') : trim_(value);
 }
 
 function trim_(value) {

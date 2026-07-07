@@ -1,19 +1,506 @@
 <script>
+  const QUESTION_TOTAL = 19;
+  const OPTIONS = {
+    interests: [
+      'AutoFork Lite',
+      'AutoFork Standard',
+      '自動運転フォークリフト全般',
+      'パレット搬送の自動化',
+      '省人化・人手不足対策',
+      'フォークリフト作業の安全対策',
+      '倉庫・工場内物流の自動化',
+      '価格・費用感',
+      '導入事例・PoC事例',
+      'その他'
+    ],
+    explanationRating: [
+      '非常に分かりやすかった',
+      '分かりやすかった',
+      'どちらとも言えない',
+      'やや分かりにくかった',
+      '詳しい説明をもう一度聞きたい'
+    ],
+    issues: [
+      'フォークリフト作業者の人手不足',
+      '作業者の高齢化',
+      '夜間・早朝・休日の搬送対応',
+      '単純な往復搬送が多い',
+      '作業者による搬送品質のばらつき',
+      '接触事故・ヒヤリハットの削減',
+      '教育・免許取得の負担',
+      '人件費の上昇',
+      '既存設備との連携',
+      '現時点では大きな課題はない',
+      'その他'
+    ],
+    automationTasks: [
+      'パレットの定点間搬送',
+      'ラインから仮置き場への搬送',
+      '仮置き場から倉庫・出荷場への搬送',
+      '入庫・出庫作業',
+      'エレベーターを使ったフロア間搬送',
+      '複数拠点への搬送',
+      '夜間・無人時間帯の搬送',
+      'まだ具体的には決まっていない',
+      'その他'
+    ],
+    loadWeight: [
+      '300kg未満',
+      '300kg〜570kg程度',
+      '570kg〜1,000kg程度',
+      '1,000kg以上',
+      '搬送物によって異なる',
+      '分からない'
+    ],
+    loadType: [
+      '木製パレット',
+      '樹脂パレット',
+      '鉄パレット',
+      'カゴ台車',
+      '専用台車',
+      'ボビン・ロール材',
+      'コンテナ・通い箱',
+      'その他',
+      '分からない'
+    ],
+    transportDistance: [
+      '10m未満',
+      '10m〜30m程度',
+      '30m〜80m程度',
+      '80m以上',
+      '複数ルートがある',
+      '分からない'
+    ],
+    considerationStatus: [
+      '具体的に導入を検討している',
+      '情報収集を始めた段階',
+      '将来的に検討したい',
+      '社内で課題はあるが、まだ検討は始まっていない',
+      '現時点では導入予定はない'
+    ],
+    introductionTiming: [
+      '3ヶ月以内',
+      '6ヶ月以内',
+      '1年以内',
+      '1年以上先',
+      '時期未定',
+      '現時点では検討していない'
+    ],
+    budgetStatus: [
+      '予算化済み',
+      'これから予算申請予定',
+      '費用感を確認してから検討したい',
+      '稟議・承認フローを確認中',
+      'まだ未定',
+      '回答しない'
+    ],
+    userRole: [
+      '導入決定者',
+      '導入検討の責任者',
+      '現場担当者',
+      '技術・設備担当者',
+      '購買・調達担当者',
+      '情報収集担当',
+      'その他'
+    ],
+    requestedActions: [
+      '詳しい製品資料がほしい',
+      '価格・見積感を知りたい',
+      'Webミーティングで説明を聞きたい',
+      '現地調査を依頼したい',
+      'デモ・テスト走行を見たい',
+      'PoCについて相談したい',
+      '代理店・販売店経由で相談したい',
+      '今は情報提供のみでよい',
+      '特に希望はない'
+    ],
+    contactPermission: [
+      'はい、連絡を希望します',
+      '必要に応じて連絡しても構いません',
+      '今回は連絡不要です'
+    ]
+  };
+
+  const SURVEY_SECTIONS = [
+    {
+      title: '基本情報',
+      questions: [
+        { number: 1, field: 'companyName', label: '会社名', kind: 'text', required: true, autocomplete: 'organization' },
+        { number: 2, field: 'personName', label: 'お名前', kind: 'text', required: true, autocomplete: 'name' },
+        { number: 3, field: 'department', label: '部署名・役職', kind: 'text', autocomplete: 'organization-title' },
+        { number: 4, field: 'email', label: 'メールアドレス', kind: 'email', required: true, autocomplete: 'email' },
+        { number: 5, field: 'phone', label: '電話番号', kind: 'tel', autocomplete: 'tel' }
+      ]
+    },
+    {
+      title: '展示内容について',
+      questions: [
+        { number: 6, field: 'interests', label: '展示会で特に関心を持たれた内容', kind: 'choice', required: true, multiple: true, options: OPTIONS.interests },
+        { number: 7, field: 'explanationRating', label: '弊社ブース・製品説明について、どのように感じられましたか', kind: 'choice', options: OPTIONS.explanationRating }
+      ]
+    },
+    {
+      title: '現場課題',
+      questions: [
+        { number: 8, field: 'issues', label: '現在、物流・搬送現場で課題に感じていること', kind: 'choice', required: true, multiple: true, options: OPTIONS.issues },
+        { number: 9, field: 'automationTasks', label: '自動化を検討したい搬送作業', kind: 'choice', multiple: true, options: OPTIONS.automationTasks }
+      ]
+    },
+    {
+      title: '搬送条件',
+      questions: [
+        { number: 10, field: 'loadWeight', label: '搬送物の重量', kind: 'choice', options: OPTIONS.loadWeight },
+        { number: 11, field: 'loadType', label: '主に使用している荷姿', kind: 'choice', multiple: true, options: OPTIONS.loadType },
+        { number: 12, field: 'transportDistance', label: '搬送距離の目安', kind: 'choice', options: OPTIONS.transportDistance }
+      ]
+    },
+    {
+      title: '導入検討状況',
+      questions: [
+        { number: 13, field: 'considerationStatus', label: '自動搬送・AGFの導入検討状況', kind: 'choice', required: true, options: OPTIONS.considerationStatus },
+        { number: 14, field: 'introductionTiming', label: '導入を検討される場合、想定時期', kind: 'choice', options: OPTIONS.introductionTiming },
+        { number: 15, field: 'budgetStatus', label: 'ご予算・稟議状況', kind: 'choice', options: OPTIONS.budgetStatus },
+        { number: 16, field: 'userRole', label: '導入検討におけるお立場', kind: 'choice', options: OPTIONS.userRole }
+      ]
+    },
+    {
+      title: '次回対応',
+      questions: [
+        { number: 17, field: 'requestedActions', label: '今後、希望される対応', kind: 'choice', required: true, multiple: true, options: OPTIONS.requestedActions },
+        { number: 18, field: 'freeComment', label: 'ご相談内容・確認したいこと', kind: 'textarea', placeholder: '搬送物の重量、現場の通路幅、搬送距離、パレット形状、費用感、導入までの流れなど' },
+        { number: 19, field: 'contactPermission', label: 'ご回答内容に基づき、弊社担当者よりご連絡してもよろしいでしょうか', kind: 'choice', required: true, options: OPTIONS.contactPermission }
+      ]
+    }
+  ];
+
   let currentData = null;
+  let currentSurveyEvent = null;
   let filtersLoaded = false;
 
   document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('apiKey').value = sessionStorage.getItem('surveyDashboardApiKey') || '';
+    document.getElementById('homeLink').href = appUrl({});
+    document.getElementById('dashboardLink').href = appUrl({ page: 'dashboard' });
+    document.getElementById('dashboardApiKey').value = sessionStorage.getItem('surveyDashboardApiKey') || '';
     document.getElementById('applyFilters').addEventListener('click', loadSummary);
     document.getElementById('resetFilters').addEventListener('click', resetFilters);
     document.querySelectorAll('[data-csv]').forEach(button => {
       button.addEventListener('click', () => downloadCsv(button.dataset.csv));
     });
-    loadSummary();
+    routeFromUrl();
   });
 
+  function routeFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const eventSlug = params.get('eventSlug') || params.get('eventId') || '';
+    const page = params.get('page') || (eventSlug ? 'survey' : 'home');
+
+    showView(page === 'dashboard' ? 'dashboard' : page === 'survey' ? 'survey' : 'home');
+
+    if (page === 'dashboard') {
+      loadSummary();
+      return;
+    }
+
+    if (page === 'survey') {
+      loadSurvey(eventSlug);
+      return;
+    }
+
+    loadHome();
+  }
+
+  function showView(name) {
+    document.querySelectorAll('[data-view]').forEach(view => {
+      view.hidden = view.dataset.view !== name;
+    });
+  }
+
+  function loadHome() {
+    const target = document.getElementById('homeEvents');
+    target.className = 'loading';
+    target.textContent = '読み込み中...';
+
+    google.script.run
+      .withSuccessHandler(renderHomeEvents)
+      .withFailureHandler(error => {
+        target.className = 'status-error';
+        target.textContent = error.message || '展示会一覧を読み込めませんでした。';
+      })
+      .getPublicEventsForWeb();
+  }
+
+  function renderHomeEvents(result) {
+    const target = document.getElementById('homeEvents');
+    const events = result && result.events ? result.events : [];
+
+    if (!events.length) {
+      target.className = 'empty';
+      target.textContent = '公開中の展示会アンケートはありません。';
+      return;
+    }
+
+    target.className = 'home-grid';
+    target.innerHTML = events.map(event => `
+      <article class="event-card">
+        <div>
+          <span class="chip status-${escapeHtml(event.status)}">${escapeHtml(event.status)}</span>
+          <h3>${escapeHtml(event.eventName)}</h3>
+          <p class="muted small">${escapeHtml([event.startDate, event.endDate].filter(Boolean).join(' - '))}</p>
+          <p class="muted small">${escapeHtml(event.venue || '会場未設定')}</p>
+          <p class="muted small">${escapeHtml(event.eventSlug)}</p>
+        </div>
+        <div class="actions">
+          <a class="button primary" href="${escapeHtml(appUrl({ page: 'survey', eventSlug: event.eventSlug }))}">フォームを開く</a>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function loadSurvey(eventSlug) {
+    currentSurveyEvent = null;
+    document.getElementById('surveyShell').hidden = true;
+    document.getElementById('surveyStatus').className = 'loading';
+    document.getElementById('surveyStatus').textContent = eventSlug ? '展示会情報を確認しています...' : '展示会IDが指定されていません。';
+    document.getElementById('surveyStatus').hidden = false;
+
+    if (!eventSlug) return;
+
+    google.script.run
+      .withSuccessHandler(renderSurvey)
+      .withFailureHandler(error => {
+        showSurveyStatus(error.message || '展示会情報を読み込めませんでした。', true);
+      })
+      .getEventForWeb(eventSlug);
+  }
+
+  function renderSurvey(result) {
+    if (!result || !result.ok || !result.event) {
+      showSurveyStatus((result && result.message) || '指定された展示会アンケートが見つかりません。', true);
+      return;
+    }
+
+    currentSurveyEvent = result.event;
+    document.getElementById('surveyStatus').hidden = true;
+    document.getElementById('surveyShell').hidden = false;
+    document.getElementById('surveyComplete').hidden = true;
+    document.getElementById('surveyForm').hidden = false;
+    document.getElementById('surveySlug').textContent = currentSurveyEvent.eventSlug;
+    document.getElementById('surveyTitle').textContent = `${currentSurveyEvent.eventName} ご来場アンケート`;
+    document.getElementById('surveyLead').textContent =
+      `${currentSurveyEvent.eventName}では、ハクオウロボティクスの展示ブースへお立ち寄りいただき、誠にありがとうございました。今後のご提案や情報提供の参考とさせていただくため、約3分のアンケートにご協力ください。`;
+    document.getElementById('surveyVenue').textContent = currentSurveyEvent.venue || '会場未設定';
+    document.getElementById('surveyDate').textContent = [currentSurveyEvent.startDate, currentSurveyEvent.endDate].filter(Boolean).join(' - ');
+
+    if (currentSurveyEvent.status !== 'published') {
+      showSurveyStatus(currentSurveyEvent.status === 'closed' ? 'このアンケートの受付は終了しました。' : 'このアンケートは現在公開されていません。', true);
+      document.getElementById('surveyShell').hidden = true;
+      return;
+    }
+
+    buildSurveyForm();
+  }
+
+  function showSurveyStatus(message, isError) {
+    const status = document.getElementById('surveyStatus');
+    status.hidden = false;
+    status.className = isError ? 'status-error' : 'loading';
+    status.textContent = message;
+  }
+
+  function buildSurveyForm() {
+    const form = document.getElementById('surveyForm');
+    form.innerHTML = `
+      ${SURVEY_SECTIONS.map(renderFormSection).join('')}
+      <section class="form-section">
+        <div class="survey-submit">
+          <p class="muted small">
+            ご回答いただいた内容は、今後のご提案・情報提供および必要に応じた弊社からのご連絡に利用します。
+          </p>
+          <button class="primary" id="surveySubmitButton" type="submit">回答を送信する</button>
+        </div>
+        <div id="surveySubmitError" class="status-error" hidden></div>
+      </section>
+    `;
+    form.onsubmit = submitSurvey;
+  }
+
+  function renderFormSection(section) {
+    const isBasic = section.title === '基本情報';
+    return `
+      <section class="form-section">
+        <h2>${escapeHtml(section.title)}</h2>
+        <div class="${isBasic ? 'field-grid' : ''}">
+          ${section.questions.map(renderQuestion).join('')}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderQuestion(question) {
+    if (question.kind === 'choice') return renderChoiceQuestion(question);
+    if (question.kind === 'textarea') return renderTextareaQuestion(question);
+    return renderTextQuestion(question);
+  }
+
+  function renderQuestionLabel(question) {
+    return `
+      <span class="question-label">
+        <span class="question-pill">設問 ${escapeHtml(question.number)}/${QUESTION_TOTAL}</span>
+        <span>${escapeHtml(question.label)}${question.required ? '<span class="required">必須</span>' : ''}</span>
+      </span>
+    `;
+  }
+
+  function renderTextQuestion(question) {
+    return `
+      <div data-question="${escapeHtml(question.field)}">
+        <label>
+          ${renderQuestionLabel(question)}
+          <input
+            name="${escapeHtml(question.field)}"
+            type="${escapeHtml(question.kind)}"
+            autocomplete="${escapeHtml(question.autocomplete || '')}"
+          >
+        </label>
+        <p class="field-error" data-error-for="${escapeHtml(question.field)}"></p>
+      </div>
+    `;
+  }
+
+  function renderTextareaQuestion(question) {
+    return `
+      <div class="full" data-question="${escapeHtml(question.field)}">
+        <label>
+          ${renderQuestionLabel(question)}
+          <textarea name="${escapeHtml(question.field)}" placeholder="${escapeHtml(question.placeholder || '')}"></textarea>
+        </label>
+        <p class="field-error" data-error-for="${escapeHtml(question.field)}"></p>
+      </div>
+    `;
+  }
+
+  function renderChoiceQuestion(question) {
+    const type = question.multiple ? 'checkbox' : 'radio';
+    return `
+      <fieldset class="full" data-question="${escapeHtml(question.field)}">
+        <legend>${renderQuestionLabel(question)}</legend>
+        <div class="choice-grid">
+          ${(question.options || []).map(option => `
+            <label class="choice-item">
+              <input type="${type}" name="${escapeHtml(question.field)}" value="${escapeHtml(option)}">
+              <span>${escapeHtml(option)}</span>
+            </label>
+          `).join('')}
+        </div>
+        <p class="field-error" data-error-for="${escapeHtml(question.field)}"></p>
+      </fieldset>
+    `;
+  }
+
+  function submitSurvey(event) {
+    event.preventDefault();
+    const payload = collectSurveyPayload();
+    const errors = validateSurveyPayload(payload);
+    renderSurveyErrors(errors);
+
+    if (Object.keys(errors).length) return;
+
+    const button = document.getElementById('surveySubmitButton');
+    const errorBox = document.getElementById('surveySubmitError');
+    button.disabled = true;
+    button.textContent = '送信中...';
+    errorBox.hidden = true;
+
+    google.script.run
+      .withSuccessHandler(result => {
+        button.disabled = false;
+        button.textContent = '回答を送信する';
+
+        if (!result || !result.ok) {
+          errorBox.hidden = false;
+          errorBox.textContent = (result && result.message) || '送信に失敗しました。';
+          return;
+        }
+
+        document.getElementById('surveyForm').hidden = true;
+        document.getElementById('surveyComplete').hidden = false;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .withFailureHandler(error => {
+        button.disabled = false;
+        button.textContent = '回答を送信する';
+        errorBox.hidden = false;
+        errorBox.textContent = error.message || '送信に失敗しました。通信環境をご確認ください。';
+      })
+      .submitSurveyFromWeb(payload);
+  }
+
+  function collectSurveyPayload() {
+    const payload = {
+      eventSlug: currentSurveyEvent ? currentSurveyEvent.eventSlug : '',
+      sourceUrl: window.location.href,
+      userAgent: window.navigator.userAgent
+    };
+
+    getAllQuestions().forEach(question => {
+      if (question.kind === 'choice') {
+        const checked = Array.from(document.querySelectorAll(`[name="${question.field}"]:checked`)).map(input => input.value);
+        payload[question.field] = question.multiple ? checked : (checked[0] || '');
+        return;
+      }
+
+      const input = document.querySelector(`[name="${question.field}"]`);
+      payload[question.field] = input ? input.value.trim() : '';
+    });
+
+    return payload;
+  }
+
+  function validateSurveyPayload(payload) {
+    const errors = {};
+
+    getAllQuestions().forEach(question => {
+      if (!question.required) return;
+      const value = payload[question.field];
+      if (Array.isArray(value) ? value.length === 0 : !String(value || '').trim()) {
+        errors[question.field] = question.multiple ? '1つ以上選択してください。' : '入力または選択してください。';
+      }
+    });
+
+    if (!payload.email) {
+      errors.email = 'メールアドレスを入力してください。';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      errors.email = 'メールアドレスの形式をご確認ください。';
+    }
+
+    return errors;
+  }
+
+  function renderSurveyErrors(errors) {
+    document.querySelectorAll('[data-question]').forEach(container => {
+      container.classList.remove('has-error');
+    });
+    document.querySelectorAll('[data-error-for]').forEach(error => {
+      error.textContent = '';
+    });
+
+    Object.keys(errors).forEach(field => {
+      const container = document.querySelector(`[data-question="${field}"]`);
+      const error = document.querySelector(`[data-error-for="${field}"]`);
+      if (container) container.classList.add('has-error');
+      if (error) error.textContent = errors[field];
+    });
+
+    const firstError = document.querySelector('.has-error');
+    if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function getAllQuestions() {
+    return SURVEY_SECTIONS.reduce((acc, section) => acc.concat(section.questions), []);
+  }
+
   function loadSummary() {
-    sessionStorage.setItem('surveyDashboardApiKey', getValue('apiKey'));
+    sessionStorage.setItem('surveyDashboardApiKey', getValue('dashboardApiKey'));
     document.getElementById('responses').className = 'loading';
     document.getElementById('responses').textContent = '読み込み中...';
 
@@ -28,18 +515,18 @@
 
   function collectFilters() {
     return {
-      eventSlug: getValue('eventSlug'),
-      leadRank: getValue('leadRank'),
-      requestedAction: getValue('requestedAction'),
-      introductionTiming: getValue('introductionTiming'),
-      contactPermission: getValue('contactPermission'),
-      keyword: getValue('keyword'),
-      apiKey: getValue('apiKey')
+      eventSlug: getValue('filterEventSlug'),
+      leadRank: getValue('filterLeadRank'),
+      requestedAction: getValue('filterRequestedAction'),
+      introductionTiming: getValue('filterIntroductionTiming'),
+      contactPermission: getValue('filterContactPermission'),
+      keyword: getValue('filterKeyword'),
+      apiKey: getValue('dashboardApiKey')
     };
   }
 
   function resetFilters() {
-    ['eventSlug', 'leadRank', 'requestedAction', 'introductionTiming', 'contactPermission', 'keyword']
+    ['filterEventSlug', 'filterLeadRank', 'filterRequestedAction', 'filterIntroductionTiming', 'filterContactPermission', 'filterKeyword']
       .forEach(id => {
         document.getElementById(id).value = '';
       });
@@ -64,11 +551,11 @@
   }
 
   function fillFilters(filters) {
-    fillSelect('eventSlug', filters.events || [], true);
-    fillSelect('leadRank', (filters.leadRank || []).map(value => ({ value, label: value })), true);
-    fillSelect('requestedAction', (filters.requestedActions || []).map(value => ({ value, label: value })), true);
-    fillSelect('introductionTiming', (filters.introductionTiming || []).map(value => ({ value, label: value })), true);
-    fillSelect('contactPermission', (filters.contactPermission || []).map(value => ({ value, label: value })), true);
+    fillSelect('filterEventSlug', filters.events || [], true);
+    fillSelect('filterLeadRank', (filters.leadRank || []).map(value => ({ value, label: value })), true);
+    fillSelect('filterRequestedAction', (filters.requestedActions || []).map(value => ({ value, label: value })), true);
+    fillSelect('filterIntroductionTiming', (filters.introductionTiming || []).map(value => ({ value, label: value })), true);
+    fillSelect('filterContactPermission', (filters.contactPermission || []).map(value => ({ value, label: value })), true);
   }
 
   function fillSelect(id, items, includeAll) {
@@ -84,12 +571,13 @@
 
   function renderKpis(data) {
     const rankMap = toCountMap(data.summary.rankCounts);
+    const requestedMap = toCountMap(data.summary.requestedActionCounts);
     const items = [
       ['回答数', data.summary.responseCount],
       ['Sランク', rankMap.S || 0],
       ['Aランク', rankMap.A || 0],
-      ['Bランク', rankMap.B || 0],
-      ['Cランク', rankMap.C || 0]
+      ['現地調査希望', requestedMap['現地調査を依頼したい'] || 0],
+      ['見積希望', requestedMap['価格・見積感を知りたい'] || 0]
     ];
 
     document.getElementById('kpis').innerHTML = items.map(item => `
@@ -115,13 +603,13 @@
               <th>eventSlug</th>
               <th>開催日</th>
               <th>会場</th>
-              <th>ステータス</th>
+              <th>状態</th>
               <th>回答数</th>
               <th>S</th>
               <th>A</th>
               <th>B</th>
               <th>C</th>
-              <th>フォームURL</th>
+              <th>フォーム</th>
             </tr>
           </thead>
           <tbody>
@@ -137,7 +625,7 @@
                 <td>${escapeHtml(event.rankA)}</td>
                 <td>${escapeHtml(event.rankB)}</td>
                 <td>${escapeHtml(event.rankC)}</td>
-                <td>${escapeHtml(event.formUrl)}</td>
+                <td><a href="${escapeHtml(event.formUrl)}" target="_blank" rel="noreferrer">開く</a></td>
               </tr>
             `).join('')}
           </tbody>
@@ -198,6 +686,7 @@
           <thead>
             <tr>
               <th>回答日時</th>
+              <th>展示会</th>
               <th>会社名</th>
               <th>氏名</th>
               <th>部署名・役職</th>
@@ -216,6 +705,7 @@
             ${responses.map(response => `
               <tr data-response-id="${escapeHtml(response.id)}">
                 <td>${escapeHtml(response.submittedAt)}</td>
+                <td>${escapeHtml(response.eventName)}</td>
                 <td><strong>${escapeHtml(response.companyName)}</strong></td>
                 <td>${escapeHtml(response.personName)}</td>
                 <td>${escapeHtml(response.department)}</td>
@@ -280,24 +770,21 @@
   }
 
   function downloadCsv(type) {
+    const eventSlug = getValue('filterEventSlug');
+    const apiKey = getValue('dashboardApiKey');
+
+    if (type === 'event' && !eventSlug) {
+      alert('展示会別CSVは、先に展示会を選択してください。');
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.search = '';
     url.searchParams.set('action', 'csv');
     url.searchParams.set('type', type);
 
-    const eventSlug = getValue('eventSlug');
-    const apiKey = getValue('apiKey');
-    if (apiKey) {
-      url.searchParams.set('apiKey', apiKey);
-    }
-
-    if (type === 'event') {
-      if (!eventSlug) {
-        alert('展示会別CSVは、先に展示会を選択してください。');
-        return;
-      }
-      url.searchParams.set('eventSlug', eventSlug);
-    }
+    if (eventSlug) url.searchParams.set('eventSlug', eventSlug);
+    if (apiKey) url.searchParams.set('apiKey', apiKey);
 
     window.open(url.toString(), '_blank');
   }
@@ -314,16 +801,26 @@
     }, {});
   }
 
+  function appUrl(params) {
+    const url = new URL(window.location.href);
+    url.search = '';
+    Object.keys(params).forEach(key => {
+      if (params[key]) url.searchParams.set(key, params[key]);
+    });
+    return url.toString();
+  }
+
   function getValue(id) {
-    return document.getElementById(id).value.trim();
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : '';
   }
 
   function escapeHtml(value) {
     return String(value == null ? '' : value)
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 </script>
