@@ -49,6 +49,8 @@ type TextField =
 
 type Errors = Partial<Record<TextField | ArrayField, string>>;
 
+const QUESTION_TOTAL = 19;
+
 const initialFormData: Omit<SurveyFormData, "eventSlug" | "sourceUrl"> = {
   companyName: "",
   personName: "",
@@ -158,6 +160,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
             label="会社名"
+            questionNumber={1}
             required
             value={formData.companyName}
             error={errors.companyName}
@@ -166,6 +169,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
           />
           <TextInput
             label="お名前"
+            questionNumber={2}
             required
             value={formData.personName}
             error={errors.personName}
@@ -174,12 +178,14 @@ export default function SurveyForm({ event }: SurveyFormProps) {
           />
           <TextInput
             label="部署名・役職"
+            questionNumber={3}
             value={formData.department}
             autoComplete="organization-title"
             onChange={(value) => updateText("department", value)}
           />
           <TextInput
             label="メールアドレス"
+            questionNumber={4}
             required
             type="email"
             value={formData.email}
@@ -189,6 +195,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
           />
           <TextInput
             label="電話番号"
+            questionNumber={5}
             type="tel"
             value={formData.phone}
             autoComplete="tel"
@@ -200,6 +207,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
       <FormSection title="展示内容について">
         <ChoiceGroup
           label="展示会で特に関心を持たれた内容"
+          questionNumber={6}
           required
           multiple
           options={interestOptions}
@@ -209,6 +217,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
         />
         <ChoiceGroup
           label="弊社ブース・製品説明について、どのように感じられましたか"
+          questionNumber={7}
           options={explanationRatingOptions}
           values={formData.explanationRating}
           onSelect={(value) => updateText("explanationRating", value)}
@@ -218,6 +227,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
       <FormSection title="現場課題">
         <ChoiceGroup
           label="現在、物流・搬送現場で課題に感じていること"
+          questionNumber={8}
           required
           multiple
           options={issueOptions}
@@ -227,6 +237,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
         />
         <ChoiceGroup
           label="自動化を検討したい搬送作業"
+          questionNumber={9}
           multiple
           options={automationTaskOptions}
           values={formData.automationTasks}
@@ -237,12 +248,14 @@ export default function SurveyForm({ event }: SurveyFormProps) {
       <FormSection title="搬送条件">
         <ChoiceGroup
           label="搬送物の重量"
+          questionNumber={10}
           options={loadWeightOptions}
           values={formData.loadWeight}
           onSelect={(value) => updateText("loadWeight", value)}
         />
         <ChoiceGroup
           label="主に使用している荷姿"
+          questionNumber={11}
           multiple
           options={loadTypeOptions}
           values={formData.loadType}
@@ -250,6 +263,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
         />
         <ChoiceGroup
           label="搬送距離の目安"
+          questionNumber={12}
           options={transportDistanceOptions}
           values={formData.transportDistance}
           onSelect={(value) => updateText("transportDistance", value)}
@@ -259,6 +273,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
       <FormSection title="導入検討状況">
         <ChoiceGroup
           label="自動搬送・AGFの導入検討状況"
+          questionNumber={13}
           required
           options={considerationStatusOptions}
           values={formData.considerationStatus}
@@ -267,18 +282,21 @@ export default function SurveyForm({ event }: SurveyFormProps) {
         />
         <ChoiceGroup
           label="導入を検討される場合、想定時期"
+          questionNumber={14}
           options={introductionTimingOptions}
           values={formData.introductionTiming}
           onSelect={(value) => updateText("introductionTiming", value)}
         />
         <ChoiceGroup
           label="ご予算・稟議状況"
+          questionNumber={15}
           options={budgetStatusOptions}
           values={formData.budgetStatus}
           onSelect={(value) => updateText("budgetStatus", value)}
         />
         <ChoiceGroup
           label="導入検討におけるお立場"
+          questionNumber={16}
           options={userRoleOptions}
           values={formData.userRole}
           onSelect={(value) => updateText("userRole", value)}
@@ -288,6 +306,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
       <FormSection title="次回対応">
         <ChoiceGroup
           label="今後、希望される対応"
+          questionNumber={17}
           required
           multiple
           options={requestedActionOptions}
@@ -296,7 +315,10 @@ export default function SurveyForm({ event }: SurveyFormProps) {
           onToggle={(value) => toggleArrayValue("requestedActions", value)}
         />
         <label className="block">
-          <span className="mb-2 block text-sm font-black">ご相談内容・確認したいこと</span>
+          <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-black">
+            <QuestionNumber value={18} />
+            <span>ご相談内容・確認したいこと</span>
+          </span>
           <textarea
             value={formData.freeComment}
             onChange={(changeEvent) => updateText("freeComment", changeEvent.target.value)}
@@ -306,6 +328,7 @@ export default function SurveyForm({ event }: SurveyFormProps) {
         </label>
         <ChoiceGroup
           label="ご回答内容に基づき、弊社担当者よりご連絡してもよろしいでしょうか"
+          questionNumber={19}
           required
           options={contactPermissionOptions}
           values={formData.contactPermission}
@@ -354,6 +377,7 @@ function FormSection({
 
 function TextInput({
   label,
+  questionNumber,
   value,
   onChange,
   required = false,
@@ -362,6 +386,7 @@ function TextInput({
   error
 }: {
   label: string;
+  questionNumber: number;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
@@ -371,9 +396,12 @@ function TextInput({
 }) {
   return (
     <label className="block" data-error={error ? "true" : undefined}>
-      <span className="mb-2 block text-sm font-black">
-        {label}
-        {required ? <RequiredMark /> : null}
+      <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-black">
+        <QuestionNumber value={questionNumber} />
+        <span>
+          {label}
+          {required ? <RequiredMark /> : null}
+        </span>
       </span>
       <input
         value={value}
@@ -390,6 +418,7 @@ function TextInput({
 
 function ChoiceGroup({
   label,
+  questionNumber,
   options,
   values,
   required = false,
@@ -399,6 +428,7 @@ function ChoiceGroup({
   onToggle
 }: {
   label: string;
+  questionNumber: number;
   options: string[];
   values: string | string[];
   required?: boolean;
@@ -410,8 +440,13 @@ function ChoiceGroup({
   return (
     <fieldset className="space-y-3" data-error={error ? "true" : undefined}>
       <legend className="text-sm font-black">
-        {label}
-        {required ? <RequiredMark /> : null}
+        <span className="flex flex-wrap items-center gap-2">
+          <QuestionNumber value={questionNumber} />
+          <span>
+            {label}
+            {required ? <RequiredMark /> : null}
+          </span>
+        </span>
       </legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {options.map((option) => {
@@ -439,6 +474,14 @@ function ChoiceGroup({
       </div>
       <FieldError message={error} />
     </fieldset>
+  );
+}
+
+function QuestionNumber({ value }: { value: number }) {
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-hakuou-blue ring-1 ring-blue-100">
+      設問 {value}/{QUESTION_TOTAL}
+    </span>
   );
 }
 
