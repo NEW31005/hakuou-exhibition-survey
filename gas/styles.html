@@ -198,6 +198,27 @@
     gap: 14px;
   }
 
+  .usage-panel {
+    background: #fff;
+  }
+
+  .usage-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .usage-steps > div {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-soft);
+    padding: 13px;
+  }
+
+  .usage-steps p {
+    margin: 6px 0 0;
+  }
+
   .event-card {
     display: flex;
     min-height: 160px;
@@ -212,6 +233,17 @@
 
   .event-card h3 {
     margin-bottom: 4px;
+  }
+
+  .event-url {
+    overflow-wrap: anywhere;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 800;
+    margin: 10px 0 0;
+    padding: 8px;
   }
 
   .filters,
@@ -393,6 +425,11 @@
   button.csv {
     background: #ecfdf7;
     color: #07664f;
+  }
+
+  .copy-button {
+    background: #f1f5f9;
+    color: var(--navy);
   }
 
   button:disabled {
@@ -595,7 +632,8 @@
     .survey-header,
     .grid,
     .detail,
-    .home-grid {
+    .home-grid,
+    .usage-steps {
       grid-template-columns: 1fr;
     }
 

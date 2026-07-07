@@ -240,20 +240,54 @@
     }
 
     target.className = 'home-grid';
-    target.innerHTML = events.map(event => `
+    target.innerHTML = events.map(event => {
+      const formUrl = appUrl({ eventSlug: event.eventSlug });
+      return `
       <article class="event-card">
         <div>
           <span class="chip status-${escapeHtml(event.status)}">${escapeHtml(event.status)}</span>
           <h3>${escapeHtml(event.eventName)}</h3>
           <p class="muted small">${escapeHtml([event.startDate, event.endDate].filter(Boolean).join(' - '))}</p>
           <p class="muted small">${escapeHtml(event.venue || '会場未設定')}</p>
-          <p class="muted small">${escapeHtml(event.eventSlug)}</p>
+          <p class="event-url" title="${escapeHtml(formUrl)}">${escapeHtml(formUrl)}</p>
         </div>
         <div class="actions">
-          <a class="button primary" href="${escapeHtml(appUrl({ eventSlug: event.eventSlug }))}">フォームを開く</a>
+          <a class="button primary" href="${escapeHtml(formUrl)}">フォームを開く</a>
+          <button class="copy-button" type="button" data-copy-url="${escapeHtml(formUrl)}">URLをコピー</button>
         </div>
       </article>
-    `).join('');
+    `;
+    }).join('');
+
+    document.querySelectorAll('[data-copy-url]').forEach(button => {
+      button.addEventListener('click', () => copyFormUrl(button));
+    });
+  }
+
+  function copyFormUrl(button) {
+    const url = button.dataset.copyUrl || '';
+    if (!url) return;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        button.textContent = 'コピー済み';
+        setTimeout(() => {
+          button.textContent = 'URLをコピー';
+        }, 1800);
+      });
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+    button.textContent = 'コピー済み';
+    setTimeout(() => {
+      button.textContent = 'URLをコピー';
+    }, 1800);
   }
 
   function loadSurvey(eventSlug) {
