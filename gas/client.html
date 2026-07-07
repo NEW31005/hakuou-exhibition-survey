@@ -1,5 +1,9 @@
 <script>
   const QUESTION_TOTAL = 19;
+  const APP_CONFIG = Object.assign({
+    publicFormBaseUrl: 'https://script.google.com/macros/s/AKfycbyLVXg6XKq8t2oOHG4ULZF6SvStCTCUBAZY-wiOvhCapijy2Yg77hwgageKBIfxQts/exec',
+    dashboardBaseUrl: 'https://script.google.com/macros/s/AKfycbxMR4lB6h4lrYuA2NikZZP3evlizsDVws9iCaqLFF7JbrOBN3GvzcP2KSlrHyjnonk/exec'
+  }, window.SURVEY_APP_CONFIG || {});
   const OPTIONS = {
     interests: [
       'AutoFork Lite',
@@ -472,7 +476,7 @@
   function collectSurveyPayload() {
     const payload = {
       eventSlug: currentSurveyEvent ? currentSurveyEvent.eventSlug : '',
-      sourceUrl: window.location.href,
+      sourceUrl: currentSurveyEvent ? appUrl({ eventSlug: currentSurveyEvent.eventSlug }) : window.location.href,
       userAgent: window.navigator.userAgent
     };
 
@@ -812,7 +816,7 @@
       return;
     }
 
-    const url = new URL(window.location.href);
+    const url = new URL(APP_CONFIG.dashboardBaseUrl || window.location.href);
     url.search = '';
     url.searchParams.set('action', 'csv');
     url.searchParams.set('type', type);
@@ -835,8 +839,8 @@
     }, {});
   }
 
-  function appUrl(params) {
-    const url = new URL(window.location.href);
+  function appUrl(params, baseUrl) {
+    const url = new URL(baseUrl || APP_CONFIG.publicFormBaseUrl || window.location.href);
     url.search = '';
     Object.keys(params).forEach(key => {
       if (params[key]) url.searchParams.set(key, params[key]);

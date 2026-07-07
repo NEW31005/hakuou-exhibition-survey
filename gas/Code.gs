@@ -1,4 +1,5 @@
 const DEFAULT_SPREADSHEET_ID = '1m8tRnUM7Y0XkIwjkyG6pv0kGqhjj5PV0zGzwJ5YLJ2Y';
+const DEFAULT_PUBLIC_FORM_BASE_URL = 'https://script.google.com/macros/s/AKfycbyLVXg6XKq8t2oOHG4ULZF6SvStCTCUBAZY-wiOvhCapijy2Yg77hwgageKBIfxQts/exec';
 const EVENT_MASTER_SHEET_NAME = '展示会マスタ';
 const ALL_RESPONSES_SHEET_NAME = '全回答';
 const TIME_ZONE = 'Asia/Tokyo';
@@ -718,11 +719,15 @@ function sanitizeSheetName_(value) {
   return name;
 }
 
-function buildFormUrl_(eventSlug) {
+function getPublicFormBaseUrl_() {
   const scriptProperties = PropertiesService.getScriptProperties();
-  const baseUrl = scriptProperties.getProperty('PUBLIC_FORM_BASE_URL') || '';
+  return (scriptProperties.getProperty('PUBLIC_FORM_BASE_URL') || DEFAULT_PUBLIC_FORM_BASE_URL).replace(/[?#].*$/, '');
+}
+
+function buildFormUrl_(eventSlug) {
+  const baseUrl = getPublicFormBaseUrl_();
   const query = `?eventSlug=${encodeURIComponent(eventSlug)}`;
-  return baseUrl ? `${baseUrl.replace(/[?#].*$/, '')}${query}` : query;
+  return `${baseUrl}${query}`;
 }
 
 function toPublicEvent_(event) {
