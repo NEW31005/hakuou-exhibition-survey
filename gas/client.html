@@ -139,8 +139,8 @@
     {
       title: '展示内容について',
       questions: [
-        { number: 6, field: 'interests', label: '展示会で特に関心を持たれた内容', kind: 'choice', required: true, multiple: true, options: OPTIONS.interests },
-        { number: 7, field: 'explanationRating', label: '弊社ブース・製品説明について、どのように感じられましたか', kind: 'choice', options: OPTIONS.explanationRating }
+        { number: 6, field: 'interests', label: '関心を持たれた内容', kind: 'choice', required: true, multiple: true, options: OPTIONS.interests },
+        { number: 7, field: 'explanationRating', label: '説明について、どのように感じられましたか', kind: 'choice', options: OPTIONS.explanationRating }
       ]
     },
     {
@@ -334,8 +334,7 @@
     document.getElementById('surveyForm').hidden = false;
     document.getElementById('surveySlug').textContent = currentSurveyEvent.eventSlug;
     document.getElementById('surveyTitle').textContent = `${currentSurveyEvent.eventName} ご来場アンケート`;
-    document.getElementById('surveyLead').textContent =
-      `${currentSurveyEvent.eventName}では、ハクオウロボティクスの展示ブースへお立ち寄りいただき、誠にありがとうございました。今後のご提案や情報提供の参考とさせていただくため、約3分のアンケートにご協力ください。`;
+    document.getElementById('surveyLead').textContent = getSurveyLeadText();
     document.getElementById('surveyVenue').textContent = currentSurveyEvent.venue || '会場未設定';
     document.getElementById('surveyDate').textContent = [currentSurveyEvent.startDate, currentSurveyEvent.endDate].filter(Boolean).join(' - ');
 
@@ -353,6 +352,29 @@
     status.hidden = false;
     status.className = isError ? 'status-error' : 'loading';
     status.textContent = message;
+  }
+
+  function getSurveyOccasionLabel() {
+    const eventName = currentSurveyEvent ? currentSurveyEvent.eventName : '';
+    if (eventName.indexOf('内覧会') >= 0) return '今回の内覧会';
+    if (eventName.indexOf('セミナー') >= 0) return '今回のセミナー';
+    if (eventName.indexOf('ショールーム') >= 0) return '今回のショールーム';
+    return '今回の展示会';
+  }
+
+  function getSurveyLeadText() {
+    return `${currentSurveyEvent.eventName}では、ハクオウロボティクスの説明・展示にお立ち寄りいただき、誠にありがとうございました。今後のご提案や情報提供の参考とさせていただくため、約3分のアンケートにご協力ください。`;
+  }
+
+  function getSectionTitle(title) {
+    if (title === '展示内容について') return `${getSurveyOccasionLabel()}について`;
+    return title;
+  }
+
+  function getQuestionLabel(question) {
+    if (question.field === 'interests') return `${getSurveyOccasionLabel()}で特に関心を持たれた内容`;
+    if (question.field === 'explanationRating') return `${getSurveyOccasionLabel()}での説明について、どのように感じられましたか`;
+    return question.label;
   }
 
   function buildSurveyForm() {
@@ -376,7 +398,7 @@
     const isBasic = section.title === '基本情報';
     return `
       <section class="form-section">
-        <h2>${escapeHtml(section.title)}</h2>
+        <h2>${escapeHtml(getSectionTitle(section.title))}</h2>
         <div class="${isBasic ? 'field-grid' : ''}">
           ${section.questions.map(renderQuestion).join('')}
         </div>
@@ -394,7 +416,7 @@
     return `
       <span class="question-label">
         <span class="question-pill">設問 ${escapeHtml(question.number)}/${QUESTION_TOTAL}</span>
-        <span>${escapeHtml(question.label)}${question.required ? '<span class="required">必須</span>' : ''}</span>
+        <span>${escapeHtml(getQuestionLabel(question))}${question.required ? '<span class="required">必須</span>' : ''}</span>
       </span>
     `;
   }

@@ -1,5 +1,8 @@
 const DEFAULT_SPREADSHEET_ID = '1m8tRnUM7Y0XkIwjkyG6pv0kGqhjj5PV0zGzwJ5YLJ2Y';
 const DEFAULT_PUBLIC_FORM_BASE_URL = 'https://script.google.com/macros/s/AKfycbyLVXg6XKq8t2oOHG4ULZF6SvStCTCUBAZY-wiOvhCapijy2Yg77hwgageKBIfxQts/exec';
+const PAST_EVENT_SLUGS_TO_KEEP_OPEN = {
+  'prologis-kitakami-kanegasaki-2026': true
+};
 const EVENT_MASTER_SHEET_NAME = '展示会マスタ';
 const ALL_RESPONSES_SHEET_NAME = '全回答';
 const TIME_ZONE = 'Asia/Tokyo';
@@ -758,7 +761,8 @@ function isEventOpenForSurvey_(event) {
 
 function getSurveyStatus_(event) {
   const status = trim_(event.status);
-  if (status === 'published' && isPastEndDate_(event.endDate)) {
+  const eventSlug = normalizeEventSlug_(event.eventSlug);
+  if (status === 'published' && isPastEndDate_(event.endDate) && !PAST_EVENT_SLUGS_TO_KEEP_OPEN[eventSlug]) {
     return 'closed';
   }
   return status;
